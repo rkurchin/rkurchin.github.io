@@ -14,7 +14,7 @@ Welcome to my website! Just here for my CV? You can download that [here](/files/
 
 ## What do/did I do?
 
-**As of September 1, 2022, I will be an Assistant Research Professor in Materials Science and Engineering at Carnegie Mellon!** Please feel free to reach out if you are interested in working together, either collaboratively or as a mentee.
+**As of September 1, 2022, I am an Assistant Research Professor in Materials Science and Engineering at Carnegie Mellon!** Please feel free to reach out via my [research group page](https://https://mse.engineering.cmu.edu/acmegroup) if you are interested in working together, either collaboratively or as a mentee.
 
 I'm a computational materials scientist (with significant previous experimental experience), until recently a Molecular Sciences Software Institute Postdoctoral Fellow working in the group of [Venkat Viswanathan](http://www.andrew.cmu.edu/user/venkatv/index.html) on discovery of battery and catalyst materials, with affiliations in the Departments of Mechanical Engineering and Materials Science and Engineering. I am the lead developer of the [Chemellia](https://github.com/Chemellia) "machine learning with atoms" ecosystem, in particular the [ChemistryFeaturization](https://chemellia.github.io/ChemistryFeaturization.jl/stable/) and [AtomicGraphNets](https://github.com/Chemellia/AtomicGraphNets.jl) packages.
 
