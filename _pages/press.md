@@ -11,6 +11,10 @@ redirect_from:
 
 Work-related
 ------------
+* I was featured in a [Behind the Researcher video](https://www.youtube.com/watch?v=rqQSKwDsZLY) produced by the CMU School of Engineering
+
+* The MSE Department ran a nice [new faculty member feature](https://www.mse.engineering.cmu.edu//news/2022/09/26-rachel_kurchin.html) on me when I started my new position
+
 * My partner [Jerry](https://www.cmu.edu/cee/m5lab/) and I were interviewed on [The Two Body Problem Podcast](https://podcasts.apple.com/us/podcast/the-two-body-problem-podcast/id1546810474), hosted by our good friends Sarah and Akshay
 
 * I appeared on a [Julia Beginner AMA](https://www.youtube.com/watch?v=sLdlIs_e07E) with [Dr. Katie Hyatt](https://kshyatt.github.io) of the Flatiron Institute
