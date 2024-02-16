@@ -1,4 +1,5 @@
 pub_date	title	venue	excerpt	lead	url_slug	paper_url
+2024-02-16	Using Bayesian parameter estimation to learn more from data without black boxes	Nature Reviews Physics	An invited Comment piece evangelizing BPE!	TRUE	bpe_comment	https://www.nature.com/articles/s42254-024-00698-0
 2023-08-24	Nonequilibrum Electrochemical Phase Maps: Beyond Butler-Volmer Kinetics	Journal of Physical Chemistry Letters	(Software for) Building phase stability maps for any electrochemical kinetic model	TRUE	ek	https://pubs.acs.org/doi/10.1021/acs.jpclett.3c01992
 2022-12-22	AutoMat: Automated materials discovery for electrochemical systems	MRS Bulletin	I co-lead an invited perspective piece summarizing our ARPA-E DIFFERENTIATE project on electrochemical materials discvoery.	TRUE	aced_mrsb	https://link.springer.com/article/10.1557/s43577-022-00424-0
 2021-10-11	A Minimal Information Set To Enable Verifiable Theoretical Battery Research	ACS Energy Letters	Giant collaboration to try to set some standards for verifiability/reproducibility in theoretical/computational battery research.	FALSE	checklist	https://pubs.acs.org/doi/10.1021/acsenergylett.1c01710
