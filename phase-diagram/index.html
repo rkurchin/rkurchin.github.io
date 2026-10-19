@@ -116,26 +116,42 @@
           </div>
         </div>
 
-        <!-- Solid Enthalpy of Mixing (Omega_S) -->
-        <div class="bg-[var(--background,#0f172a)] p-3.5 rounded-xl border border-[var(--border,#334155)] space-y-2">
+        <!-- Solid Enthalpy of Mixing (Single Solid: Omega_S) -->
+        <div id="controls-omegaS-single" class="bg-[var(--background,#0f172a)] p-3.5 rounded-xl border border-[var(--border,#334155)] space-y-2">
           <div class="flex justify-between items-center text-xs">
-            <span class="font-semibold text-emerald-400">Solid Mixing Enthalpy (&Omega;<sub>S</sub>)</span>
-            <span id="val-omegaS" class="font-mono font-medium text-emerald-300">0.0 kJ/mol</span>
+            <span class="font-semibold text-green-400">Solid Mixing Enthalpy (&Omega;<sub>S</sub>)</span>
+            <span id="val-omegaS" class="font-mono font-medium text-green-300">0.0 kJ/mol</span>
           </div>
-          <input type="range" id="slider-omegaS" min="-20" max="35" step="1" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="onParamChange()">
+          <input type="range" id="slider-omegaS" min="-20" max="35" step="1" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500" oninput="onParamChange()">
           <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)]">
             <span class="text-blue-400">&lt; 0 (Ordering)</span>
             <span class="text-rose-400">&gt; 0 (Clustering / Immiscible)</span>
           </div>
         </div>
 
+        <!-- Solid Enthalpy of Mixing (Two Lattices: Omega_alpha & Omega_beta) -->
+        <div id="controls-omegaS-dual" class="hidden bg-[var(--background,#0f172a)] p-3.5 rounded-xl border border-[var(--border,#334155)] space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-semibold text-green-400">Solid Mixing (&Omega;<sub>&alpha;</sub>, &Omega;<sub>&beta;</sub>)</span>
+            <span id="val-omega-dual" class="font-mono font-medium text-slate-200 text-[11px]">&Omega;<sub>&alpha;</sub> = 0.0 &nbsp;|&nbsp; &Omega;<sub>&beta;</sub> = 0.0</span>
+          </div>
+          <div class="flex gap-2">
+            <input type="range" id="slider-omegaAlpha" min="-20" max="35" step="1" value="0" class="w-1/2 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-green-500" title="Ω_α" oninput="onParamChange()">
+            <input type="range" id="slider-omegaBeta" min="-20" max="35" step="1" value="0" class="w-1/2 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-cyan-500" title="Ω_β" oninput="onParamChange()">
+          </div>
+          <div class="flex justify-between text-[11px] font-mono">
+            <span class="text-green-400">&Omega;<sub>&alpha;</sub> (Solid &alpha;)</span>
+            <span class="text-cyan-400">&Omega;<sub>&beta;</sub> (Solid &beta;)</span>
+          </div>
+        </div>
+
         <!-- Liquid Enthalpy of Mixing (Omega_L) -->
         <div class="bg-[var(--background,#0f172a)] p-3.5 rounded-xl border border-[var(--border,#334155)] space-y-2">
           <div class="flex justify-between items-center text-xs">
-            <span class="font-semibold text-cyan-400">Liquid Mixing Enthalpy (&Omega;<sub>L</sub>)</span>
-            <span id="val-omegaL" class="font-mono font-medium text-cyan-300">0.0 kJ/mol</span>
+            <span class="font-semibold text-blue-400">Liquid Mixing Enthalpy (&Omega;<sub>L</sub>)</span>
+            <span id="val-omegaL" class="font-mono font-medium text-blue-300">0.0 kJ/mol</span>
           </div>
-          <input type="range" id="slider-omegaL" min="-20" max="25" step="1" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="onParamChange()">
+          <input type="range" id="slider-omegaL" min="-20" max="25" step="1" value="0" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500" oninput="onParamChange()">
           <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)]">
             <span>Negative (Attract)</span>
             <span>Positive (Repel)</span>
@@ -205,17 +221,17 @@
             </p>
           </div>
           <div class="flex items-center gap-2 text-xs flex-wrap flex-shrink-0">
-            <span class="inline-flex items-center gap-1 text-cyan-400 font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> Liquid (L)
+            <span class="inline-flex items-center gap-1 text-blue-400 font-medium">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> Liquid (L)
             </span>
-            <span class="inline-flex items-center gap-1 text-emerald-400 font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block"></span> Solid (S / &alpha;)
+            <span class="inline-flex items-center gap-1 text-green-400 font-medium">
+              <span class="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span> Solid (S / &alpha;)
             </span>
-            <span id="legend-beta" class="hidden items-center gap-1 text-amber-400 font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Solid (&beta;)
+            <span id="legend-beta" class="hidden items-center gap-1 text-cyan-400 font-medium">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-500 inline-block"></span> Solid (&beta;)
             </span>
             <span id="legend-compound" class="hidden items-center gap-1 text-purple-400 font-medium">
-              <span class="w-2.5 h-2.5 rounded-full bg-purple-400 inline-block"></span> Compound (&gamma;)
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block"></span> Compound (&gamma;)
             </span>
           </div>
         </div>
@@ -241,8 +257,8 @@
             <div id="readout-muB" class="font-mono font-medium text-slate-200 text-sm">-18.6 kJ/mol</div>
           </div>
           <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[68px]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Phase Rule (<i>F</i> at <i>x</i><sub>sel</sub>):</span>
-            <div id="readout-dof" class="font-semibold text-emerald-400 text-sm"><i>F</i> = 1 (Tie-line)</div>
+            <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]" title="Isobaric Gibbs Phase Rule: F = C - &phi; + 1">Phase Rule (<i>F</i> at <i>x</i><sub>sel</sub>):</span>
+            <div id="readout-dof" class="font-semibold text-green-400 text-sm"><i>F</i> = 1 (Tie-line)</div>
           </div>
         </div>
       </div>
@@ -307,6 +323,8 @@
       TmB: 1550,
       omegaL: 0.0,
       omegaS: 0.0,
+      omegaAlpha: 0.0,
+      omegaBeta: 0.0,
       gMin: -20.0,
       gMax: 8.0,
       hasCompound: false,
@@ -338,7 +356,7 @@
       eutectic: {
         name: 'Eutectic (1 Lattice)',
         prototypeSystem: 'e.g. Ag–Cu',
-        prototypeDesc: 'Single parent crystal structure (FCC); eutectic separation driven by positive solid mixing enthalpy (Ω_S ≫ 0) creating a miscibility gap.',
+        prototypeDesc: 'Single parent crystal structure (FCC); eutectic separation driven by positive solid mixing enthalpy (<i>&Omega;</i><sub>S</sub> ≫ 0) creating a miscibility gap.',
         T: 1100, Tmin: 700, Tmax: 1700,
         TmA: 1150, TmB: 1450,
         omegaL: 2.0, omegaS: 24.0, // High positive solid enthalpy creates two-phase region
@@ -350,10 +368,11 @@
       eutectic_2: {
         name: 'Eutectic (2 Lattices)',
         prototypeSystem: 'e.g. Al–Si',
-        prototypeDesc: 'Two competing crystal structures (FCC Al + Diamond-Cubic Si) with distinct free energy curves and lattice stability penalties.',
+        prototypeDesc: 'Two competing crystal structures (FCC Al + Diamond-Cubic Si) with distinct free energy curves, independent mixing enthalpies (<i>&Omega;</i><sub>&alpha;</sub>, <i>&Omega;</i><sub>&beta;</sub>), and lattice stability penalties.',
         T: 900, Tmin: 600, Tmax: 1600,
         TmA: 1000, TmB: 1400,
         omegaL: -2.0, omegaS: 12.0,
+        omegaAlpha: 12.0, omegaBeta: 12.0,
         hasCompound: false,
         hasBeta: true,
         gMin: -16.0,
@@ -377,10 +396,11 @@
       peritectic: {
         name: 'Peritectic',
         prototypeSystem: 'e.g. Pt–Re, Fe–C',
-        prototypeDesc: 'Competing crystal structures with widely separated melting points (T_m,B ≫ T_m,A); liquid reacts with high-melting solid to form low-melting solid.',
+        prototypeDesc: 'Competing crystal structures with widely separated melting points (<i>T</i><sub>m,B</sub> ≫ <i>T</i><sub>m,A</sub>); liquid reacts with high-melting solid to form low-melting solid.',
         T: 1400, Tmin: 800, Tmax: 1900,
         TmA: 1000, TmB: 1800,
         omegaL: 0.0, omegaS: 0.0,
+        omegaAlpha: -4.0, omegaBeta: 4.0,
         hasCompound: false,
         hasBeta: true,
         gMin: -16.0,
@@ -513,7 +533,8 @@
         const gPureA_alpha = G_pure_solid_A(T); // 0
         const gPureB_alpha = G_pure_solid_B(T) + 3.0; // lattice stability penalty for B in alpha
         const ref = (1 - x) * gPureA_alpha + x * gPureB_alpha;
-        const dh = (state.omegaS - 4.0) * x * (1 - x);
+        const omega = state.omegaAlpha !== undefined ? state.omegaAlpha : -4.0;
+        const dh = omega * x * (1 - x);
         const minusTds = -T * s_ideal_mix(x);
         return ref + dh + minusTds;
       }
@@ -522,7 +543,8 @@
         const gPureA_alpha = G_pure_solid_A(T); // 0
         const gPureB_alpha = G_pure_solid_B(T) + 8.0; // lattice penalty for B in alpha structure (+8 kJ/mol)
         const ref = (1 - x) * gPureA_alpha + x * gPureB_alpha;
-        const dh = state.omegaS * x * (1 - x);
+        const omega = state.omegaAlpha !== undefined ? state.omegaAlpha : state.omegaS;
+        const dh = omega * x * (1 - x);
         const minusTds = -T * s_ideal_mix(x);
         return ref + dh + minusTds;
       }
@@ -539,7 +561,8 @@
         const gPureA_beta = G_pure_solid_A(T) + 8.0; // lattice penalty for A in beta structure (+8 kJ/mol)
         const gPureB_beta = G_pure_solid_B(T); // 0
         const ref = (1 - x) * gPureA_beta + x * gPureB_beta;
-        const dh = state.omegaS * x * (1 - x);
+        const omega = state.omegaBeta !== undefined ? state.omegaBeta : state.omegaS;
+        const dh = omega * x * (1 - x);
         const minusTds = -T * s_ideal_mix(x);
         return ref + dh + minusTds;
       }
@@ -547,7 +570,8 @@
       const gPureA_beta = G_pure_solid_A(T) + 12.0; // lattice stability penalty for A in beta
       const gPureB_beta = G_pure_solid_B(T); // 0
       const ref = (1 - x) * gPureA_beta + x * gPureB_beta;
-      const dh = (state.omegaS + 4.0) * x * (1 - x);
+      const omega = state.omegaBeta !== undefined ? state.omegaBeta : 4.0;
+      const dh = omega * x * (1 - x);
       const minusTds = -T * s_ideal_mix(x);
       return ref + dh + minusTds;
     }
@@ -842,8 +866,8 @@
       if (p.prototypeSystem) {
         const protoSys = document.getElementById('prototype-system');
         const protoDesc = document.getElementById('prototype-desc');
-        if (protoSys) protoSys.innerText = p.prototypeSystem;
-        if (protoDesc) protoDesc.innerText = p.prototypeDesc;
+        if (protoSys) protoSys.innerHTML = p.prototypeSystem;
+        if (protoDesc) protoDesc.innerHTML = p.prototypeDesc;
       }
 
       // Update UI elements
@@ -857,11 +881,14 @@
         activeBtn.classList.remove('text-[var(--muted-foreground,#94a3b8)]');
       }
 
+      state.hasBeta = p.hasBeta || false;
+      state.omegaAlpha = p.omegaAlpha !== undefined ? p.omegaAlpha : p.omegaS;
+      state.omegaBeta = p.omegaBeta !== undefined ? p.omegaBeta : p.omegaS;
+
       // Sync slider inputs
       document.getElementById('slider-temp').min = state.Tmin;
       document.getElementById('slider-temp').max = state.Tmax;
       document.getElementById('slider-temp').value = state.T;
-      document.getElementById('slider-omegaS').value = state.omegaS;
       document.getElementById('slider-omegaL').value = state.omegaL;
       document.getElementById('slider-tmA').value = state.TmA;
       document.getElementById('slider-tmB').value = state.TmB;
@@ -869,7 +896,23 @@
         document.getElementById('slider-hcomp').value = state.TmComp || 1550;
       }
 
-      state.hasBeta = p.hasBeta || false;
+      // Sync solid mixing controls: single vs dual
+      const ctrlOmegaSingle = document.getElementById('controls-omegaS-single');
+      const ctrlOmegaDual = document.getElementById('controls-omegaS-dual');
+      if (state.hasBeta) {
+        if (ctrlOmegaSingle) ctrlOmegaSingle.classList.add('hidden');
+        if (ctrlOmegaDual) ctrlOmegaDual.classList.remove('hidden');
+        const slAlpha = document.getElementById('slider-omegaAlpha');
+        const slBeta = document.getElementById('slider-omegaBeta');
+        if (slAlpha) slAlpha.value = state.omegaAlpha;
+        if (slBeta) slBeta.value = state.omegaBeta;
+      } else {
+        if (ctrlOmegaSingle) ctrlOmegaSingle.classList.remove('hidden');
+        if (ctrlOmegaDual) ctrlOmegaDual.classList.add('hidden');
+        const slS = document.getElementById('slider-omegaS');
+        if (slS) slS.value = state.omegaS;
+      }
+
       const betaLegend = document.getElementById('legend-beta');
       if (betaLegend) {
         if (state.hasBeta) {
@@ -904,7 +947,13 @@
     function updateParamLabels() {
       document.getElementById('val-temp').innerText = `${Math.round(state.T)} K`;
       document.getElementById('label-curr-temp').innerText = `${Math.round(state.T)} K`;
-      document.getElementById('val-omegaS').innerText = `${state.omegaS.toFixed(1)} kJ/mol`;
+      if (state.hasBeta) {
+        const valDual = document.getElementById('val-omega-dual');
+        if (valDual) valDual.innerHTML = `<span class="text-green-300">&Omega;<sub>&alpha;</sub> = ${state.omegaAlpha.toFixed(1)}</span> &nbsp;|&nbsp; <span class="text-cyan-300">&Omega;<sub>&beta;</sub> = ${state.omegaBeta.toFixed(1)} kJ/mol</span>`;
+      } else {
+        const valS = document.getElementById('val-omegaS');
+        if (valS) valS.innerText = `${state.omegaS.toFixed(1)} kJ/mol`;
+      }
       document.getElementById('val-omegaL').innerText = `${state.omegaL.toFixed(1)} kJ/mol`;
       document.getElementById('val-tm').innerHTML = `<i>T</i><sub>m,A</sub> = ${state.TmA} K &nbsp;|&nbsp; <i>T</i><sub>m,B</sub> = ${state.TmB} K`;
       if (state.hasCompound) {
@@ -919,7 +968,15 @@
     }
 
     function onParamChange() {
-      state.omegaS = parseFloat(document.getElementById('slider-omegaS').value);
+      if (state.hasBeta) {
+        const slAlpha = document.getElementById('slider-omegaAlpha');
+        const slBeta = document.getElementById('slider-omegaBeta');
+        if (slAlpha) state.omegaAlpha = parseFloat(slAlpha.value);
+        if (slBeta) state.omegaBeta = parseFloat(slBeta.value);
+        state.omegaS = state.omegaAlpha;
+      } else {
+        state.omegaS = parseFloat(document.getElementById('slider-omegaS').value);
+      }
       state.omegaL = parseFloat(document.getElementById('slider-omegaL').value);
       state.TmA = parseFloat(document.getElementById('slider-tmA').value);
       state.TmB = parseFloat(document.getElementById('slider-tmB').value);
@@ -1073,22 +1130,38 @@
 
       // 2. Draw Term Decompositions if checked
       if (state.showDecomp) {
-        // Enthalpy Delta h_mix (Amber dashed)
-        ctxGX.strokeStyle = '#f59e0b';
+        const omegaA = state.hasBeta && state.omegaAlpha !== undefined ? state.omegaAlpha : state.omegaS;
+
+        // Enthalpy Delta h_mix (Warm Coral / Rose dashed #f43f5e)
+        ctxGX.strokeStyle = '#f43f5e';
         ctxGX.setLineDash([4, 4]);
         ctxGX.lineWidth = 1.5;
         ctxGX.beginPath();
         for (let i = 0; i <= 100; i++) {
           const x = i / 100;
-          const dh = state.omegaS * x * (1 - x);
+          const dh = omegaA * x * (1 - x);
           const sx = toScreenX(x);
           const sy = toScreenY(dh);
           if (i === 0) ctxGX.moveTo(sx, sy); else ctxGX.lineTo(sx, sy);
         }
         ctxGX.stroke();
 
-        // Entropy -T * Delta s_mix (Cyan dashed)
-        ctxGX.strokeStyle = '#06b6d4';
+        // If two solids with different mixing enthalpies, also draw beta solid mixing enthalpy in Cyan dashed (#06b6d4)
+        if (state.hasBeta && state.omegaBeta !== undefined && state.omegaBeta !== omegaA) {
+          ctxGX.strokeStyle = '#06b6d4';
+          ctxGX.beginPath();
+          for (let i = 0; i <= 100; i++) {
+            const x = i / 100;
+            const dh = state.omegaBeta * x * (1 - x);
+            const sx = toScreenX(x);
+            const sy = toScreenY(dh);
+            if (i === 0) ctxGX.moveTo(sx, sy); else ctxGX.lineTo(sx, sy);
+          }
+          ctxGX.stroke();
+        }
+
+        // Entropy -T * Delta s_mix (Indigo dashed #818cf8)
+        ctxGX.strokeStyle = '#818cf8';
         ctxGX.beginPath();
         for (let i = 1; i < 100; i++) {
           const x = i / 100;
@@ -1107,17 +1180,34 @@
         ctxGX.textBaseline = 'middle';
 
         // Delta h_mix label at x=0.5
-        const midDh = state.omegaS * 0.25;
+        const midDh = omegaA * 0.25;
         if (midDh >= gMin && midDh <= gMax) {
           const sxH = toScreenX(0.5);
           const syH = toScreenY(midDh);
+          const textH = state.hasBeta && state.omegaBeta !== omegaA ? 'Δh_mix(α)' : 'Δh_mix';
           ctxGX.fillStyle = 'rgba(15, 23, 42, 0.85)';
-          ctxGX.fillRect(sxH - 25, syH - 8, 50, 16);
-          ctxGX.strokeStyle = '#f59e0b';
+          ctxGX.fillRect(sxH - 28, syH - 8, 56, 16);
+          ctxGX.strokeStyle = '#f43f5e';
           ctxGX.lineWidth = 1;
-          ctxGX.strokeRect(sxH - 25, syH - 8, 50, 16);
-          ctxGX.fillStyle = '#f59e0b';
-          ctxGX.fillText('Δh_mix', sxH, syH);
+          ctxGX.strokeRect(sxH - 28, syH - 8, 56, 16);
+          ctxGX.fillStyle = '#f43f5e';
+          ctxGX.fillText(textH, sxH, syH);
+        }
+
+        // Delta h_mix (beta) label at x=0.5 if present and different
+        if (state.hasBeta && state.omegaBeta !== undefined && state.omegaBeta !== omegaA) {
+          const midDhBeta = state.omegaBeta * 0.25;
+          if (midDhBeta >= gMin && midDhBeta <= gMax) {
+            const sxHB = toScreenX(0.5);
+            const syHB = toScreenY(midDhBeta);
+            ctxGX.fillStyle = 'rgba(15, 23, 42, 0.85)';
+            ctxGX.fillRect(sxHB - 28, syHB - 8, 56, 16);
+            ctxGX.strokeStyle = '#06b6d4';
+            ctxGX.lineWidth = 1;
+            ctxGX.strokeRect(sxHB - 28, syHB - 8, 56, 16);
+            ctxGX.fillStyle = '#06b6d4';
+            ctxGX.fillText('Δh_mix(β)', sxHB, syHB);
+          }
         }
 
         // -T Delta s_mix label at x=0.5
@@ -1127,17 +1217,17 @@
           const syS = toScreenY(midTds);
           ctxGX.fillStyle = 'rgba(15, 23, 42, 0.85)';
           ctxGX.fillRect(sxS - 29, syS - 8, 58, 16);
-          ctxGX.strokeStyle = '#06b6d4';
+          ctxGX.strokeStyle = '#818cf8';
           ctxGX.lineWidth = 1;
           ctxGX.strokeRect(sxS - 29, syS - 8, 58, 16);
-          ctxGX.fillStyle = '#06b6d4';
+          ctxGX.fillStyle = '#818cf8';
           ctxGX.fillText('−TΔs_mix', sxS, syS);
         }
         ctxGX.restore();
       }
 
-      // 3. Draw Liquid Curve G_L(x)
-      ctxGX.strokeStyle = '#22d3ee';
+      // 3. Draw Liquid Curve G_L(x) (Electric Blue #3b82f6)
+      ctxGX.strokeStyle = '#3b82f6';
       ctxGX.lineWidth = 2.5;
       ctxGX.beginPath();
       for (let i = 1; i < 150; i++) {
@@ -1149,8 +1239,8 @@
       }
       ctxGX.stroke();
 
-      // 4. Draw Solid Curve G_S(x)
-      ctxGX.strokeStyle = '#34d399';
+      // 4. Draw Solid Curve G_S(x) / G_alpha(x) (Vivid Green #22c55e)
+      ctxGX.strokeStyle = '#22c55e';
       ctxGX.lineWidth = 2.5;
       ctxGX.beginPath();
       for (let i = 1; i < 150; i++) {
@@ -1162,9 +1252,9 @@
       }
       ctxGX.stroke();
 
-      // 4b. Draw Beta Solid Curve G_beta(x) if peritectic
+      // 4b. Draw Beta Solid Curve G_beta(x) if two solids present (Bright Cyan #06b6d4)
       if (state.hasBeta) {
-        ctxGX.strokeStyle = '#f59e0b';
+        ctxGX.strokeStyle = '#06b6d4';
         ctxGX.lineWidth = 2.5;
         ctxGX.beginPath();
         for (let i = 1; i < 150; i++) {
@@ -1213,8 +1303,8 @@
       // Draw Common Tangents (extrapolations clipped cleanly inside the plot box)
       if (state.showTangent && eq.chords.length > 0) {
         eq.chords.forEach((chord) => {
-          ctxGX.strokeStyle = '#f43f5e'; // Rose red for common tangent
-          ctxGX.lineWidth = 2;
+          ctxGX.strokeStyle = '#cbd5e1'; // Crisp light slate for common tangent
+          ctxGX.lineWidth = 1.8;
           ctxGX.beginPath();
 
           // Extrapolate line across plot to show intercepts (clips cleanly at frame boundaries)
@@ -1254,7 +1344,7 @@
           const tag = eq.chords.length > 1 ? `(${chordIdx + 1})` : '';
 
           // Contact points on the free energy curves
-          ctxGX.fillStyle = '#f43f5e';
+          ctxGX.fillStyle = '#ef4444';
           if (chord.y1 >= gMin && chord.y1 <= gMax) {
             ctxGX.beginPath();
             ctxGX.arc(toScreenX(chord.x1), toScreenY(chord.y1), 4, 0, Math.PI * 2);
@@ -1311,7 +1401,7 @@
         }
       }
 
-      // Detect invariant point (F=0, P=3): three phases coexist specifically at the junction composition
+      // Detect invariant point (F=0, φ=3): three phases coexist specifically at the junction composition
       let isAtInvariantPoint = false;
       let invariantPointX = 0;
       let invariantPhaseText = '';
@@ -1399,31 +1489,31 @@
       if (isAtInvariantPoint) {
         // Three-phase coexistence specifically at invariant point (e.g. eutectic point): F = 0
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">${invariantPhaseText}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Invariant Point)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=3, <i>C</i>=2 (Invariant Point)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 3, <i>C</i> = 2 (Invariant Point)</span>`;
       } else if (isPureA_Tm) {
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid (A) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at pure A melting point (<i>T</i><sub>m,A</sub> = ${state.TmA} K)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=1 (Pure Melting Point)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 1 (Pure Melting Point)</span>`;
       } else if (isPureB_Tm) {
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid (B) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at pure B melting point (<i>T</i><sub>m,B</sub> = ${state.TmB} K)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=1 (Pure Melting Point)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 1 (Pure Melting Point)</span>`;
       } else if (isPureComp_Tm) {
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Compound (AₘBₙ) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at congruent melting point (<i>T</i><sub>m,comp</sub> = ${Math.round(state.TmComp || 1550)} K)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=2 (Congruent Melting Extremum)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 2 (Congruent Melting Extremum)</span>`;
       } else if (activeChord) {
         // Two-phase coexistence on a tie-line (away from invariant composition): F = 1
         const p1Name = getPhaseName(activeChord.id1, activeChord.x1);
         const p2Name = getPhaseName(activeChord.id2, activeChord.x2);
         elPhases.innerHTML = `<span class="text-amber-300 font-semibold">${p1Name} + ${p2Name}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Tie-line)</span>`;
-        elDof.innerHTML = `<span class="text-amber-300 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=2 (Tie-line)</span>`;
+        elDof.innerHTML = `<span class="text-amber-300 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 2 (Tie-line)</span>`;
       } else {
         const sName = getPhaseName(bestPhase.id, X0);
         const isPure = (X0 <= 0.005 || X0 >= 0.995);
         if (isPure) {
-          elPhases.innerHTML = `<span class="text-emerald-400 font-semibold">${sName} (Pure ${X0 <= 0.5 ? 'A' : 'B'})</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Pure Component)</span>`;
-          elDof.innerHTML = `<span class="text-emerald-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=1, <i>C</i>=1 (Unary System)</span>`;
+          elPhases.innerHTML = `<span class="text-green-400 font-semibold">${sName} (Pure ${X0 <= 0.5 ? 'A' : 'B'})</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Pure Component)</span>`;
+          elDof.innerHTML = `<span class="text-green-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 1, <i>C</i> = 1 (Unary System)</span>`;
         } else {
-          elPhases.innerHTML = `<span class="text-emerald-400 font-semibold">${sName}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Single Phase)</span>`;
-          elDof.innerHTML = `<span class="text-emerald-400 font-semibold"><i>F</i> = 2</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=1, <i>C</i>=2 (Area)</span>`;
+          elPhases.innerHTML = `<span class="text-green-400 font-semibold">${sName}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Single Phase)</span>`;
+          elDof.innerHTML = `<span class="text-green-400 font-semibold"><i>F</i> = 2</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 1, <i>C</i> = 2 (Area)</span>`;
         }
       }
 
