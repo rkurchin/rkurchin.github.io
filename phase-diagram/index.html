@@ -172,6 +172,22 @@
         </div>
 
       </div>
+
+      <!-- Jump to Landmark Temperatures & Invariant Points Toolbar -->
+      <div class="mt-4 pt-3.5 border-t border-[var(--border,#334155)] flex flex-col md:flex-row md:items-center gap-2.5">
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <span class="inline-flex items-center justify-center p-1 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+          </span>
+          <span class="text-xs font-semibold text-[var(--foreground,#f8fafc)]">Landmarks & Invariants:</span>
+          <span class="text-[11px] text-[var(--muted-foreground,#94a3b8)] hidden sm:inline">(Click to jump directly to invariant F=0 or pure melting points)</span>
+        </div>
+        <div id="landmark-buttons" class="flex flex-wrap items-center gap-1.5 min-w-0">
+          <!-- Dynamically populated buttons -->
+        </div>
+      </div>
     </div>
 
     <!-- Main Visualizations Grid -->
@@ -693,6 +709,114 @@
       return 1435;
     }
 
+    // Helper: Find invariant points in precomputed grid
+    function findGridInvariantPoint(grid, filterFn) {
+      if (!grid || grid.length === 0) return null;
+      let best = null;
+      let minSlopeDiff = 999;
+      for (const row of grid) {
+        if (row.chords.length >= 2) {
+          for (let ci = 0; ci < row.chords.length - 1; ci++) {
+            const c1 = row.chords[ci];
+            const c2 = row.chords[ci + 1];
+            const gap = Math.abs(c1.x2 - c2.x1);
+            const dSlope = Math.abs(c1.slope - c2.slope);
+            const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
+            const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
+            if (meetsAtIntermediate && hasLiquid && dSlope < 2.5) {
+              const xJunc = (c1.x2 + c2.x1) / 2;
+              if (!filterFn || filterFn(row.T, xJunc, c1, c2)) {
+                if (dSlope < minSlopeDiff) {
+                  minSlopeDiff = dSlope;
+                  best = { T: Math.round(row.T), x: Number(xJunc.toFixed(3)) };
+                }
+              }
+            }
+          }
+        }
+      }
+      return best;
+    }
+
+    // Jump directly to key temperature and composition
+    function jumpToState(T, x) {
+      if (T !== undefined && T !== null) {
+        state.T = Math.round(T);
+        const sliderTemp = document.getElementById('slider-temp');
+        if (sliderTemp) sliderTemp.value = state.T;
+      }
+      if (x !== undefined && x !== null) {
+        state.selectedX = Math.max(0.0, Math.min(1.0, Number(x)));
+      }
+      updateParamLabels();
+      redraw();
+      updateLandmarkButtons();
+    }
+
+    // Dynamically populate Landmark & Invariant Point shortcut buttons
+    function updateLandmarkButtons() {
+      const container = document.getElementById('landmark-buttons');
+      if (!container) return;
+
+      let items = [];
+
+      if (state.preset === 'isomorphous') {
+        items = [
+          { label: `Pure A (Tm = ${state.TmA} K)`, T: state.TmA, x: 0.0, badge: 'Tm,A' },
+          { label: `Pure B (Tm = ${state.TmB} K)`, T: state.TmB, x: 1.0, badge: 'Tm,B' }
+        ];
+      } else if (state.preset === 'eutectic') {
+        const inv = findGridInvariantPoint(cachedTXGrid) || { T: 871, x: 0.38 };
+        items = [
+          { label: `Eutectic Point (${inv.T} K, x = ${inv.x.toFixed(2)})`, T: inv.T, x: inv.x, isInvariant: true },
+          { label: `Pure A (Tm = ${state.TmA} K)`, T: state.TmA, x: 0.0, badge: 'Tm,A' },
+          { label: `Pure B (Tm = ${state.TmB} K)`, T: state.TmB, x: 1.0, badge: 'Tm,B' }
+        ];
+      } else if (state.preset === 'eutectic_2') {
+        const inv = findGridInvariantPoint(cachedTXGrid) || { T: 729, x: 0.36 };
+        items = [
+          { label: `Eutectic Point (${inv.T} K, x = ${inv.x.toFixed(2)})`, T: inv.T, x: inv.x, isInvariant: true },
+          { label: `Pure A FCC (Tm = ${state.TmA} K)`, T: state.TmA, x: 0.0, badge: 'Tm,A' },
+          { label: `Pure B Dia (Tm = ${state.TmB} K)`, T: state.TmB, x: 1.0, badge: 'Tm,B' }
+        ];
+      } else if (state.preset === 'peritectic') {
+        const inv = { T: 1441, x: 0.749 };
+        items = [
+          { label: `Peritectic Point (${inv.T} K, x = ${inv.x.toFixed(2)})`, T: inv.T, x: inv.x, isInvariant: true },
+          { label: `Pure A (Tm = ${state.TmA} K)`, T: state.TmA, x: 0.0, badge: 'Tm,A' },
+          { label: `Pure B (Tm = ${state.TmB} K)`, T: state.TmB, x: 1.0, badge: 'Tm,B' }
+        ];
+      } else if (state.preset === 'compound') {
+        const isDefault = Math.abs((state.TmComp || 1550) - 1550) < 1 && Math.abs(state.TmA - 1150) < 1 && Math.abs(state.TmB - 1300) < 1;
+        const inv1 = isDefault ? { T: 1078, x: 0.084 } : (findGridInvariantPoint(cachedTXGrid, (T, x) => x < 0.3) || { T: 1078, x: 0.084 });
+        const inv2 = isDefault ? { T: 1180, x: 0.88 } : (findGridInvariantPoint(cachedTXGrid, (T, x) => x > 0.7) || { T: 1180, x: 0.88 });
+        const tmComp = state.TmComp || 1550;
+        items = [
+          { label: `Left Eutectic E₁ (${inv1.T} K, x = ${inv1.x.toFixed(2)})`, T: inv1.T, x: inv1.x, isInvariant: true },
+          { label: `Congruent Compound Tm = ${tmComp} K`, T: tmComp, x: 0.50, badge: 'Tm,comp' },
+          { label: `Right Eutectic E₂ (${inv2.T} K, x = ${inv2.x.toFixed(2)})`, T: inv2.T, x: inv2.x, isInvariant: true },
+          { label: `Pure A (Tm = ${state.TmA} K)`, T: state.TmA, x: 0.0, badge: 'Tm,A' },
+          { label: `Pure B (Tm = ${state.TmB} K)`, T: state.TmB, x: 1.0, badge: 'Tm,B' }
+        ];
+      }
+
+      container.innerHTML = items.map(item => {
+        const isCurrent = Math.abs(state.T - item.T) <= 3 && Math.abs(state.selectedX - item.x) <= 0.04;
+        if (item.isInvariant) {
+          return `<button type="button" onclick="jumpToState(${item.T}, ${item.x})" class="px-2.5 py-1 rounded-lg font-medium text-xs bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border ${isCurrent ? 'border-rose-400 ring-2 ring-rose-500/60 shadow-lg shadow-rose-950/50' : 'border-rose-500/40 hover:border-rose-400'} transition shadow-sm flex items-center gap-1.5 cursor-pointer flex-shrink-0" title="Jump directly to invariant 3-phase coexistence (F=0)">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse"></span>
+            <span>${item.label}</span>
+            <span class="bg-rose-500/30 text-[10px] px-1.5 py-0.5 rounded font-mono font-bold text-rose-200">F = 0</span>
+          </button>`;
+        } else {
+          return `<button type="button" onclick="jumpToState(${item.T}, ${item.x})" class="px-2.5 py-1 rounded-lg font-medium text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 border ${isCurrent ? 'border-amber-400 text-amber-200 ring-2 ring-amber-500/50' : 'border-slate-700 hover:border-slate-600'} transition flex items-center gap-1.5 cursor-pointer flex-shrink-0">
+            <span>${item.label}</span>
+            ${item.badge ? `<span class="bg-slate-700 text-[10px] px-1.5 py-0.5 rounded font-mono text-slate-300">${item.badge}</span>` : ''}
+          </button>`;
+        }
+      }).join('');
+    }
+
     // --- Preset Loader ---
     function loadPreset(key) {
       const p = PRESETS[key];
@@ -861,6 +985,7 @@
 
       drawGX();
       drawTX();
+      updateLandmarkButtons();
     }
 
     // --- Render G(x) Plot ---
@@ -1198,10 +1323,10 @@
           const gap = Math.abs(c1.x2 - c2.x1);
           const dSlope = Math.abs(c1.slope - c2.slope);
           const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
-          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.04;
-          if (meetsAtIntermediate && hasLiquid && dSlope < 1.5) {
+          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
+          if (meetsAtIntermediate && hasLiquid && dSlope < 2.0) {
             const xJunction = (c1.x2 + c2.x1) / 2;
-            if (Math.abs(X0 - xJunction) <= 0.02) {
+            if (Math.abs(X0 - xJunction) <= 0.035) {
               isAtInvariantPoint = true;
               invariantPointX = xJunction;
               invariantChord1 = c1;
@@ -1239,11 +1364,15 @@
 
       // Tangent to lowest curve at X0
       const eps = 1e-4;
-      const xP = Math.min(0.999, X0 + eps);
-      const xM = Math.max(0.001, X0 - eps);
+      let xP = Math.min(1.0, X0 + eps);
+      let xM = Math.max(0.0, X0 - eps);
+      if (xP - xM < eps) {
+        if (X0 < 0.5) xP = xM + eps;
+        else xM = xP - eps;
+      }
       const dG0 = (bestPhase.fn(xP) - bestPhase.fn(xM)) / (xP - xM);
-      const singleMuA = bestPhase.g - X0 * dG0;
-      const singleMuB = bestPhase.g + (1 - X0) * dG0;
+      const singleMuA = X0 <= 1e-5 ? bestPhase.g : bestPhase.g - X0 * dG0;
+      const singleMuB = X0 >= 1 - 1e-5 ? bestPhase.g : bestPhase.g + (1 - X0) * dG0;
 
       // Draw point of interest on GX lower envelope
       const currentEqG = activeChord ? (activeChord.y1 + activeChord.slope * (X0 - activeChord.x1)) : bestPhase.g;
@@ -1263,10 +1392,23 @@
       const elMuA = document.getElementById('readout-muA');
       const elMuB = document.getElementById('readout-muB');
 
+      const isPureA_Tm = (X0 <= 0.005) && Math.abs(T - state.TmA) <= 5;
+      const isPureB_Tm = (X0 >= 0.995) && Math.abs(T - state.TmB) <= 5;
+      const isPureComp_Tm = state.hasCompound && (Math.abs(X0 - state.compX) <= 0.015) && Math.abs(T - (state.TmComp || 1550)) <= 5;
+
       if (isAtInvariantPoint) {
         // Three-phase coexistence specifically at invariant point (e.g. eutectic point): F = 0
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">${invariantPhaseText}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Invariant Point)</span>`;
         elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=3, <i>C</i>=2 (Invariant Point)</span>`;
+      } else if (isPureA_Tm) {
+        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid (A) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at pure A melting point (<i>T</i><sub>m,A</sub> = ${state.TmA} K)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=1 (Pure Melting Point)</span>`;
+      } else if (isPureB_Tm) {
+        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid (B) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at pure B melting point (<i>T</i><sub>m,B</sub> = ${state.TmB} K)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=1 (Pure Melting Point)</span>`;
+      } else if (isPureComp_Tm) {
+        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Compound (AₘBₙ) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at congruent melting point (<i>T</i><sub>m,comp</sub> = ${Math.round(state.TmComp || 1550)} K)</span>`;
+        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=2 (Congruent Melting Extremum)</span>`;
       } else if (activeChord) {
         // Two-phase coexistence on a tie-line (away from invariant composition): F = 1
         const p1Name = getPhaseName(activeChord.id1, activeChord.x1);
@@ -1275,8 +1417,14 @@
         elDof.innerHTML = `<span class="text-amber-300 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=2, <i>C</i>=2 (Tie-line)</span>`;
       } else {
         const sName = getPhaseName(bestPhase.id, X0);
-        elPhases.innerHTML = `<span class="text-emerald-400 font-semibold">${sName}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Single Phase)</span>`;
-        elDof.innerHTML = `<span class="text-emerald-400 font-semibold"><i>F</i> = 2</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=1, <i>C</i>=2 (Area)</span>`;
+        const isPure = (X0 <= 0.005 || X0 >= 0.995);
+        if (isPure) {
+          elPhases.innerHTML = `<span class="text-emerald-400 font-semibold">${sName} (Pure ${X0 <= 0.5 ? 'A' : 'B'})</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Pure Component)</span>`;
+          elDof.innerHTML = `<span class="text-emerald-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=1, <i>C</i>=1 (Unary System)</span>`;
+        } else {
+          elPhases.innerHTML = `<span class="text-emerald-400 font-semibold">${sName}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Single Phase)</span>`;
+          elDof.innerHTML = `<span class="text-emerald-400 font-semibold"><i>F</i> = 2</span><span class="text-[10px] text-slate-400 block font-normal"><i>P</i>=1, <i>C</i>=2 (Area)</span>`;
+        }
       }
 
       // Chemical potentials: report all active chords if multiple exist, highlighting the active one
@@ -1601,10 +1749,10 @@
           const gap = Math.abs(c1.x2 - c2.x1);
           const dSlope = Math.abs(c1.slope - c2.slope);
           const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
-          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.04;
-          if (meetsAtIntermediate && hasLiquid && dSlope < 1.5) {
+          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
+          if (meetsAtIntermediate && hasLiquid && dSlope < 2.0) {
             const xJunction = (c1.x2 + c2.x1) / 2;
-            if (Math.abs(state.selectedX - xJunction) <= 0.02) {
+            if (Math.abs(state.selectedX - xJunction) <= 0.035) {
               isAtInvariantPointTX = true;
               invariantPointXTX = xJunction;
               break;
@@ -1654,9 +1802,22 @@
 
       // 6. Update Lever Rule Readout
       document.getElementById('readout-comp').innerHTML = `<i>x</i><sub>B</sub> = ${state.selectedX.toFixed(2)}`;
+      const isPureA_TmTX = (state.selectedX <= 0.005) && Math.abs(state.T - state.TmA) <= 5;
+      const isPureB_TmTX = (state.selectedX >= 0.995) && Math.abs(state.T - state.TmB) <= 5;
+      const isPureComp_TmTX = state.hasCompound && (Math.abs(state.selectedX - state.compX) <= 0.015) && Math.abs(state.T - (state.TmComp || 1550)) <= 5;
+
       if (isAtInvariantPointTX) {
         document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Invariant Point (<i>x</i> = ${invariantPointXTX.toFixed(2)})</span>`;
         document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">3 Coexisting Phases (<i>F</i> = 0)</span>`;
+      } else if (isPureA_TmTX) {
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Pure Component A (<i>T</i><sub>m,A</sub> = ${state.TmA} K)</span>`;
+        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid Coexistence (<i>F</i> = 0)</span>`;
+      } else if (isPureB_TmTX) {
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Pure Component B (<i>T</i><sub>m,B</sub> = ${state.TmB} K)</span>`;
+        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid Coexistence (<i>F</i> = 0)</span>`;
+      } else if (isPureComp_TmTX) {
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Congruent Compound (<i>x</i> = ${state.compX.toFixed(2)})</span>`;
+        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Compound Equilibrium (<i>F</i> = 1)</span>`;
       } else if (activeTieLine) {
         const c1 = activeTieLine.x1;
         const c2 = activeTieLine.x2;
@@ -1688,7 +1849,7 @@
       const padLeft = 68, padRight = 35;
       const plotW = pos.width - padLeft - padRight;
       if (pos.x >= padLeft && pos.x <= pos.width - padRight) {
-        state.selectedX = Math.max(0.01, Math.min(0.99, (pos.x - padLeft) / plotW));
+        state.selectedX = Math.max(0.0, Math.min(1.0, (pos.x - padLeft) / plotW));
         redraw();
       }
     }
