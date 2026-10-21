@@ -533,48 +533,37 @@
       return 'ph';
     }
 
-    // Helper: Draw chemical potential labels with clean Roman subscripts and species identifier
-    function drawMuLabel(ctx, sub, x, y, align, tag = '') {
+    // Helper: Draw chemical potential labels with clean Roman subscripts, numeric value, and badge styling
+    function drawMuLabel(ctx, sub, x, y, align, tag = '', val = null, color = '#38bdf8') {
       ctx.save();
       ctx.textBaseline = 'middle';
-      const descText = tag ? `(TL ${tag.replace(/[()]/g, '')})` : `(Species ${sub})`;
-      if (align === 'left') {
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 12px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillText('μ', x, y);
-        ctx.font = 'bold 9px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillText(sub, x + 10, y + 3);
-        if (tag) {
-          ctx.font = 'bold 9px ui-sans-serif, system-ui, sans-serif';
-          ctx.fillStyle = '#fbbf24';
-          ctx.fillText(tag, x + 18, y - 2);
-          ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillText(descText, x + 34, y);
-        } else {
-          ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillText(descText, x + 22, y);
-        }
+      const valText = (val !== null && isFinite(val)) ? ` = ${val.toFixed(1)} kJ` : '';
+      const tagText = tag ? ` [${tag.replace(/[()]/g, '')}]` : ` (${sub})`;
+      const fullText = `μ${sub}${valText}${tagText}`;
+
+      ctx.font = 'bold 10px ui-monospace, SFMono-Regular, monospace';
+      const textW = ctx.measureText(fullText).width;
+      const boxW = textW + 12;
+      const boxH = 18;
+      const boxX = (align === 'left') ? x : (x - boxW);
+
+      // Pill badge background
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      if (ctx.roundRect) {
+        ctx.roundRect(boxX, y - boxH / 2, boxW, boxH, 4);
       } else {
-        ctx.textAlign = 'right';
-        ctx.font = '10px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        const descW = tag ? 36 : 60;
-        ctx.fillText(descText, x - descW, y);
-        if (tag) {
-          ctx.font = 'bold 9px ui-sans-serif, system-ui, sans-serif';
-          ctx.fillStyle = '#fbbf24';
-          ctx.fillText(tag, x - 12, y - 2);
-        }
-        ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 9px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillText(sub, x, y + 3);
-        const subW = ctx.measureText(sub).width;
-        ctx.font = 'bold 12px ui-sans-serif, system-ui, sans-serif';
-        ctx.fillText('μ', x - subW - (tag ? 14 : 1), y);
+        ctx.rect(boxX, y - boxH / 2, boxW, boxH);
       }
+      ctx.fill();
+      ctx.stroke();
+
+      // Text render
+      ctx.textAlign = 'left';
+      ctx.fillStyle = color;
+      ctx.fillText(fullText, boxX + 6, y);
       ctx.restore();
     }
 
@@ -1259,55 +1248,216 @@
       const dim = setupCanvas(canvasGX, ctxGX);
       const w = dim.width;
       const h = dim.height;
-      const pad = { left: 68, right: 35, top: 30, bottom: 40 };
+      const pad = { left: 68, right: 58, top: 28, bottom: 40 };
 
       ctxGX.clearRect(0, 0, w, h);
 
       // Standard composition range [0, 1]
       const xMin = 0.0, xMax = 1.0;
+      const T = state.T;
+      const X0 = state.selectedX;
+
+      // 1. Precompute Equilibrium & Equilibrium State at Selected Composition X0
+      const eq = computeEquilibrium(T, 300, xMin, xMax);
+
+      let activeChord = null;
+      let activeChordIndex = -1;
+      for (let i = 0; i < eq.chords.length; i++) {
+        const ch = eq.chords[i];
+        if (X0 >= ch.x1 && X0 <= ch.x2) {
+          activeChord = ch;
+          activeChordIndex = i;
+          break;
+        }
+      }
+
+      // Detect invariant point (F=0, φ=3)
+      let isAtInvariantPoint = false;
+      let invariantPointX = 0;
+      let invariantPhaseText = '';
+      let invariantChord1 = null, invariantChord2 = null;
+      if (eq.chords.length >= 2) {
+        for (let ci = 0; ci < eq.chords.length - 1; ci++) {
+          const c1 = eq.chords[ci];
+          const c2 = eq.chords[ci + 1];
+          const gap = Math.abs(c1.x2 - c2.x1);
+          const dSlope = Math.abs(c1.slope - c2.slope);
+          const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
+          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
+          if (meetsAtIntermediate && hasLiquid && dSlope < 2.0) {
+            const xJunction = (c1.x2 + c2.x1) / 2;
+            if (Math.abs(X0 - xJunction) <= 0.035) {
+              isAtInvariantPoint = true;
+              invariantPointX = xJunction;
+              invariantChord1 = c1;
+              invariantChord2 = c2;
+              if (state.preset === 'eutectic') {
+                invariantPhaseText = 'Liquid + Solid (α₁) + Solid (α₂)';
+              } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
+                invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
+              } else if (state.hasCompound) {
+                const cForm = getCompoundInfo().formula;
+                if (c2.x2 <= state.compX + 0.05) {
+                  invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
+                } else {
+                  invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
+                }
+              } else {
+                invariantPhaseText = 'Three Coexisting Phases';
+              }
+              break;
+            }
+          }
+        }
+      }
+
+      // Fallback check against cached invariant points
+      if (!isAtInvariantPoint && cachedInvariants) {
+        if (state.preset === 'eutectic') {
+          const inv = cachedInvariants.eutectic;
+          if (inv && Math.abs(T - inv.T) <= 2 && Math.abs(X0 - inv.x) <= 0.04) {
+            isAtInvariantPoint = true;
+            invariantPointX = inv.x;
+            invariantPhaseText = 'Liquid + Solid (α₁) + Solid (α₂)';
+          }
+        } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
+          const inv = state.preset === 'eutectic_2' ? cachedInvariants.eutectic : cachedInvariants.peritectic;
+          if (inv && Math.abs(T - inv.T) <= 2 && Math.abs(X0 - inv.x) <= 0.04) {
+            isAtInvariantPoint = true;
+            invariantPointX = inv.x;
+            invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
+          }
+        } else if (state.hasCompound) {
+          const inv1 = cachedInvariants.e1;
+          const inv2 = cachedInvariants.e2;
+          const cForm = getCompoundInfo().formula;
+          if (inv1 && Math.abs(T - inv1.T) <= 2 && Math.abs(X0 - inv1.x) <= 0.04) {
+            isAtInvariantPoint = true;
+            invariantPointX = inv1.x;
+            invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
+          } else if (inv2 && Math.abs(T - inv2.T) <= 2 && Math.abs(X0 - inv2.x) <= 0.04) {
+            isAtInvariantPoint = true;
+            invariantPointX = inv2.x;
+            invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
+          }
+        }
+      }
+
+      // Single-phase candidate evaluation at X0
+      const gl0 = G_liquid(X0, T);
+      const gs0 = G_solid(X0, T);
+      const cand = [
+        { id: 0, g: gl0, fn: (x) => G_liquid(x, T) },
+        { id: 1, g: gs0, fn: (x) => G_solid(x, T) }
+      ];
+      if (state.hasBeta) cand.push({ id: 2, g: G_beta(X0, T), fn: (x) => G_beta(x, T) });
+      if (state.hasCompound) cand.push({ id: 3, g: G_compound(X0, T), fn: (x) => G_compound(x, T) });
+      cand.sort((a, b) => a.g - b.g);
+      const bestPhase = cand[0];
+
+      // Tangent to lowest curve at X0
+      const eps = 1e-4;
+      let xP = Math.min(1.0, X0 + eps);
+      let xM = Math.max(0.0, X0 - eps);
+      if (xP - xM < eps) {
+        if (X0 < 0.5) xP = xM + eps;
+        else xM = xP - eps;
+      }
+      const dG0 = (bestPhase.fn(xP) - bestPhase.fn(xM)) / (xP - xM);
+      const singleMuA = X0 <= 1e-5 ? bestPhase.g : bestPhase.g - X0 * dG0;
+      const singleMuB = X0 >= 1 - 1e-5 ? bestPhase.g : bestPhase.g + (1 - X0) * dG0;
+
+      // 2. Dynamic Y Extent: accommodates all chord intercepts, single-phase intercepts, and curves
+      const presetGMin = (PRESETS[state.preset] && PRESETS[state.preset].gMin !== undefined) ? PRESETS[state.preset].gMin : -20.0;
+      const presetGMax = (PRESETS[state.preset] && PRESETS[state.preset].gMax !== undefined) ? PRESETS[state.preset].gMax : 8.0;
+      let targetMin = presetGMin;
+      let targetMax = presetGMax;
+
+      for (const ch of eq.chords) {
+        if (ch.muA < targetMin && ch.muA > -70) targetMin = ch.muA;
+        if (ch.muB < targetMin && ch.muB > -70) targetMin = ch.muB;
+      }
+      if (!activeChord) {
+        if (singleMuA < targetMin && singleMuA > -45 && X0 >= 0.05) targetMin = singleMuA;
+        if (singleMuB < targetMin && singleMuB > -45 && X0 <= 0.95) targetMin = singleMuB;
+      }
+
+      targetMin -= 2.0; // padding so dots and badges sit comfortably inside plot bounds
+      const range = targetMax - targetMin;
+      let step = 4;
+      if (range <= 10) step = 1;
+      else if (range <= 22) step = 4;
+      else if (range <= 32) step = 4;
+      else if (range <= 50) step = 5;
+      else step = 10;
+
+      const gMin = Math.floor(targetMin / step) * step;
+      const gMax = Math.ceil(targetMax / step) * step;
 
       // Coordinate transforms
       function toScreenX(x) {
         return pad.left + ((x - xMin) / (xMax - xMin)) * (w - pad.left - pad.right);
       }
-
-      // Calculate Y extent: tightened per preset for clear curve features
-      const T = state.T;
-      const gMin = state.gMin !== undefined ? state.gMin : -20.0;
-      const gMax = state.gMax !== undefined ? state.gMax : 8.0;
-
       function toScreenY(y) {
         return pad.top + ((gMax - y) / (gMax - gMin)) * (h - pad.top - pad.bottom);
       }
 
-      // 1. Draw Grid & Axes
+      // 3. Draw Grid & Axes
       ctxGX.strokeStyle = '#334155';
       ctxGX.lineWidth = 1;
       ctxGX.beginPath();
       // Box frame
       ctxGX.strokeRect(pad.left, pad.top, w - pad.left - pad.right, h - pad.top - pad.bottom);
 
-      // Y-axis ticks and grid lines
+      // Y-axis ticks and grid lines for both Left (Pure A, x=0) and Right (Pure B, x=1) axes
       ctxGX.font = '11px ui-monospace, SFMono-Regular, monospace';
-      ctxGX.textAlign = 'right';
       ctxGX.textBaseline = 'middle';
-      const yTickInfo = getYTicks(gMin, gMax);
-      yTickInfo.ticks.forEach(gy => {
+      const yTicks = [];
+      for (let val = gMin; val <= gMax + 1e-4; val += step) {
+        yTicks.push(val);
+      }
+
+      yTicks.forEach(gy => {
         const sy = toScreenY(gy);
         const isZero = Math.abs(gy) < 1e-3;
+
+        // Left axis tick label (Pure A, x = 0)
+        ctxGX.textAlign = 'right';
         ctxGX.fillStyle = isZero ? '#f8fafc' : '#94a3b8';
         ctxGX.fillText(gy.toFixed(0), pad.left - 8, sy);
+
+        // Right axis tick label (Pure B, x = 1)
+        ctxGX.textAlign = 'left';
+        ctxGX.fillStyle = isZero ? '#f8fafc' : '#94a3b8';
+        ctxGX.fillText(gy.toFixed(0), w - pad.right + 8, sy);
+
+        // Tick marks on left and right borders
+        ctxGX.strokeStyle = '#475569';
+        ctxGX.beginPath();
+        ctxGX.moveTo(pad.left, sy);
+        ctxGX.lineTo(pad.left + 4, sy);
+        ctxGX.moveTo(w - pad.right - 4, sy);
+        ctxGX.lineTo(w - pad.right, sy);
+        ctxGX.stroke();
 
         // Horizontal grid line (highlight g = 0 pure solid reference)
         ctxGX.strokeStyle = isZero ? '#475569' : '#1e293b';
         ctxGX.lineWidth = isZero ? 1.5 : 1;
         ctxGX.beginPath();
-        ctxGX.moveTo(pad.left, sy);
-        ctxGX.lineTo(w - pad.right, sy);
+        ctxGX.moveTo(pad.left + 4, sy);
+        ctxGX.lineTo(w - pad.right - 4, sy);
         ctxGX.stroke();
       });
 
+      // Pure A and Pure B header labels at top of axes
+      ctxGX.font = 'bold 10px ui-sans-serif, system-ui';
+      ctxGX.fillStyle = '#94a3b8';
+      ctxGX.textAlign = 'center';
+      ctxGX.fillText('Pure A (μ_A)', pad.left, pad.top - 12);
+      ctxGX.fillText('Pure B (μ_B)', w - pad.right, pad.top - 12);
+
       // X-axis ticks
+      ctxGX.font = '11px ui-monospace, SFMono-Regular, monospace';
       ctxGX.textAlign = 'center';
       ctxGX.textBaseline = 'top';
       const numXTicks = 5;
@@ -1337,7 +1487,7 @@
       ctxGX.rect(pad.left, pad.top, w - pad.left - pad.right, h - pad.top - pad.bottom);
       ctxGX.clip();
 
-      // 2. Draw Term Decompositions if checked
+      // 4. Draw Term Decompositions if checked
       if (state.showDecomp) {
         const omegaA = state.hasBeta && state.omegaAlpha !== undefined ? state.omegaAlpha : state.omegaS;
 
@@ -1435,7 +1585,7 @@
         ctxGX.restore();
       }
 
-      // 3. Draw Liquid Curve G_L(x) (Electric Blue #3b82f6)
+      // 5. Draw Liquid Curve G_L(x) (Electric Blue #3b82f6)
       ctxGX.strokeStyle = '#3b82f6';
       ctxGX.lineWidth = 2.5;
       ctxGX.beginPath();
@@ -1448,7 +1598,7 @@
       }
       ctxGX.stroke();
 
-      // 4. Draw Solid Curve G_S(x) / G_alpha(x) (Hunter Forest #15803d for α when dual, Vivid Lime #84cc16 when single solid)
+      // 6. Draw Solid Curve G_S(x) / G_alpha(x) (Hunter Forest #15803d for α when dual, Vivid Lime #84cc16 when single solid)
       ctxGX.strokeStyle = state.hasBeta ? '#15803d' : '#84cc16';
       ctxGX.lineWidth = 2.8;
       ctxGX.beginPath();
@@ -1461,7 +1611,7 @@
       }
       ctxGX.stroke();
 
-      // 4b. Draw Beta Solid Curve G_beta(x) if two solids present (Vivid Lime #84cc16)
+      // 6b. Draw Beta Solid Curve G_beta(x) if two solids present (Vivid Lime #84cc16)
       if (state.hasBeta) {
         ctxGX.strokeStyle = '#84cc16';
         ctxGX.lineWidth = 2.8;
@@ -1476,7 +1626,7 @@
         ctxGX.stroke();
       }
 
-      // 5. Draw Compound Curve G_C(x) (Vivid Fuchsia #d946ef)
+      // 7. Draw Compound Curve G_C(x) (Vivid Fuchsia #d946ef)
       if (state.hasCompound) {
         ctxGX.strokeStyle = '#d946ef';
         ctxGX.lineWidth = 2.5;
@@ -1495,10 +1645,7 @@
         ctxGX.stroke();
       }
 
-      // 6. Compute Equilibrium & Common Tangents
-      const eq = computeEquilibrium(T, 300, xMin, xMax);
-
-      // Highlight lower convex envelope
+      // 8. Highlight lower convex envelope
       ctxGX.strokeStyle = 'rgba(255, 255, 255, 0.4)';
       ctxGX.lineWidth = 1;
       ctxGX.beginPath();
@@ -1509,21 +1656,18 @@
       }
       ctxGX.stroke();
 
-      // Draw Common Tangents (extrapolations clipped cleanly inside the plot box)
-      if (state.showTangent && eq.chords.length > 0) {
+      // 9. Draw Tangent Lines (clipped cleanly within the plot box)
+      if (state.showTangent) {
+        // Draw Two-Phase Common Tangents
         eq.chords.forEach((chord) => {
-          ctxGX.strokeStyle = '#cbd5e1'; // Crisp light slate for common tangent
-          ctxGX.lineWidth = 1.8;
-          ctxGX.beginPath();
+          const isActive = (chord === activeChord);
+          ctxGX.strokeStyle = isActive ? '#fbbf24' : '#64748b';
+          ctxGX.lineWidth = isActive ? 2.2 : 1.5;
 
-          // Extrapolate line across plot to show intercepts (clips cleanly at frame boundaries)
-          const xL = 0;
-          const yL = chord.muA;
-          const xR = 1;
-          const yR = chord.muB;
-
+          // Extrapolate left to x = 0
           ctxGX.setLineDash([4, 4]);
-          ctxGX.moveTo(toScreenX(xL), toScreenY(yL));
+          ctxGX.beginPath();
+          ctxGX.moveTo(toScreenX(0), toScreenY(chord.muA));
           ctxGX.lineTo(toScreenX(chord.x1), toScreenY(chord.y1));
           ctxGX.stroke();
 
@@ -1534,59 +1678,149 @@
           ctxGX.lineTo(toScreenX(chord.x2), toScreenY(chord.y2));
           ctxGX.stroke();
 
-          // Extrapolate to right
+          // Extrapolate right to x = 1
           ctxGX.setLineDash([4, 4]);
           ctxGX.beginPath();
           ctxGX.moveTo(toScreenX(chord.x2), toScreenY(chord.y2));
-          ctxGX.lineTo(toScreenX(xR), toScreenY(yR));
+          ctxGX.lineTo(toScreenX(1), toScreenY(chord.muB));
           ctxGX.stroke();
           ctxGX.setLineDash([]);
         });
+
+        // If in a single-phase region, draw the tangent line to the active curve at (X0, g(X0))
+        if (!activeChord && isFinite(singleMuA) && isFinite(singleMuB)) {
+          ctxGX.strokeStyle = '#c084fc'; // Purple dashed tangent line
+          ctxGX.lineWidth = 1.8;
+          ctxGX.setLineDash([4, 4]);
+          ctxGX.beginPath();
+          ctxGX.moveTo(toScreenX(0), toScreenY(singleMuA));
+          ctxGX.lineTo(toScreenX(1), toScreenY(singleMuB));
+          ctxGX.stroke();
+          ctxGX.setLineDash([]);
+        }
       }
 
-      // Restore unclipped context for contact points, intercept markers, and labels
+      // Restore unclipped context for contact points, intercept markers, and badges
       ctxGX.restore();
 
-      // Draw Contact points and Chemical Potential Intercepts: μ_A and μ_B
-      if (state.showTangent && eq.chords.length > 0) {
-        eq.chords.forEach((chord, chordIdx) => {
-          const tag = eq.chords.length > 1 ? `(${chordIdx + 1})` : '';
+      // 10. Draw Contact points and Chemical Potential Intercepts: μ_A and μ_B
+      if (state.showTangent) {
+        if (activeChord) {
+          eq.chords.forEach((chord, chordIdx) => {
+            const isActive = (chord === activeChord);
+            const tag = eq.chords.length > 1 ? `TL ${chordIdx + 1}` : 'TL';
+            const color = isActive ? '#fbbf24' : '#64748b';
 
-          // Contact points on the free energy curves
-          ctxGX.fillStyle = '#ef4444';
-          if (chord.y1 >= gMin && chord.y1 <= gMax) {
-            ctxGX.beginPath();
-            ctxGX.arc(toScreenX(chord.x1), toScreenY(chord.y1), 4, 0, Math.PI * 2);
-            ctxGX.fill();
-          }
-          if (chord.y2 >= gMin && chord.y2 <= gMax) {
-            ctxGX.beginPath();
-            ctxGX.arc(toScreenX(chord.x2), toScreenY(chord.y2), 4, 0, Math.PI * 2);
-            ctxGX.fill();
-          }
+            // Contact dots on curves for active chord
+            if (isActive) {
+              ctxGX.fillStyle = '#ef4444';
+              if (chord.y1 >= gMin && chord.y1 <= gMax) {
+                ctxGX.beginPath();
+                ctxGX.arc(toScreenX(chord.x1), toScreenY(chord.y1), 4.5, 0, Math.PI * 2);
+                ctxGX.fill();
+                ctxGX.strokeStyle = '#ffffff';
+                ctxGX.lineWidth = 1;
+                ctxGX.stroke();
+              }
+              if (chord.y2 >= gMin && chord.y2 <= gMax) {
+                ctxGX.beginPath();
+                ctxGX.arc(toScreenX(chord.x2), toScreenY(chord.y2), 4.5, 0, Math.PI * 2);
+                ctxGX.fill();
+                ctxGX.strokeStyle = '#ffffff';
+                ctxGX.lineWidth = 1;
+                ctxGX.stroke();
+              }
+            }
+
+            // Intercept at X = 0 (Pure A): μ_A
+            if (chord.muA >= gMin && chord.muA <= gMax) {
+              const syA = toScreenY(chord.muA);
+              ctxGX.fillStyle = color;
+              ctxGX.beginPath();
+              ctxGX.arc(toScreenX(0), syA, isActive ? 5 : 3.5, 0, Math.PI * 2);
+              ctxGX.fill();
+              if (isActive) {
+                ctxGX.strokeStyle = '#ffffff';
+                ctxGX.lineWidth = 1;
+                ctxGX.stroke();
+                drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag, chord.muA, color);
+              } else if (eq.chords.length <= 3) {
+                drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag, chord.muA, color);
+              }
+            }
+
+            // Intercept at X = 1 (Pure B): μ_B
+            if (chord.muB >= gMin && chord.muB <= gMax) {
+              const syB = toScreenY(chord.muB);
+              ctxGX.fillStyle = color;
+              ctxGX.beginPath();
+              ctxGX.arc(toScreenX(1), syB, isActive ? 5 : 3.5, 0, Math.PI * 2);
+              ctxGX.fill();
+              if (isActive) {
+                ctxGX.strokeStyle = '#ffffff';
+                ctxGX.lineWidth = 1;
+                ctxGX.stroke();
+                drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag, chord.muB, color);
+              } else if (eq.chords.length <= 3) {
+                drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag, chord.muB, color);
+              }
+            }
+          });
+        } else {
+          // Single-phase field: draw single-phase tangent intercepts and any background chord intercepts
+          const phaseAbbr = getPhaseAbbr(bestPhase.id, X0);
+          const color = '#c084fc'; // Purple
 
           // Intercept dot & label at X = 0 (Pure A): μ_A
-          ctxGX.fillStyle = '#38bdf8';
-          if (chord.muA >= gMin && chord.muA <= gMax) {
-            const syA = toScreenY(chord.muA);
+          if (isFinite(singleMuA) && singleMuA >= gMin && singleMuA <= gMax) {
+            const syA = toScreenY(singleMuA);
+            ctxGX.fillStyle = color;
             ctxGX.beginPath();
-            ctxGX.arc(toScreenX(0), syA, 4.5, 0, Math.PI * 2);
+            ctxGX.arc(toScreenX(0), syA, 5, 0, Math.PI * 2);
             ctxGX.fill();
-            drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag);
+            ctxGX.strokeStyle = '#ffffff';
+            ctxGX.lineWidth = 1;
+            ctxGX.stroke();
+            drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', phaseAbbr, singleMuA, color);
           }
 
           // Intercept dot & label at X = 1 (Pure B): μ_B
-          if (chord.muB >= gMin && chord.muB <= gMax) {
-            const syB = toScreenY(chord.muB);
+          if (isFinite(singleMuB) && singleMuB >= gMin && singleMuB <= gMax) {
+            const syB = toScreenY(singleMuB);
+            ctxGX.fillStyle = color;
             ctxGX.beginPath();
-            ctxGX.arc(toScreenX(1), syB, 4.5, 0, Math.PI * 2);
+            ctxGX.arc(toScreenX(1), syB, 5, 0, Math.PI * 2);
             ctxGX.fill();
-            drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag);
+            ctxGX.strokeStyle = '#ffffff';
+            ctxGX.lineWidth = 1;
+            ctxGX.stroke();
+            drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', phaseAbbr, singleMuB, color);
           }
-        });
+
+          // Also draw background chords in muted slate
+          eq.chords.forEach((chord, chordIdx) => {
+            const tag = eq.chords.length > 1 ? `TL ${chordIdx + 1}` : 'TL';
+            if (chord.muA >= gMin && chord.muA <= gMax) {
+              const syA = toScreenY(chord.muA);
+              ctxGX.fillStyle = '#64748b';
+              ctxGX.beginPath();
+              ctxGX.arc(toScreenX(0), syA, 3.5, 0, Math.PI * 2);
+              ctxGX.fill();
+              drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag, chord.muA, '#94a3b8');
+            }
+            if (chord.muB >= gMin && chord.muB <= gMax) {
+              const syB = toScreenY(chord.muB);
+              ctxGX.fillStyle = '#64748b';
+              ctxGX.beginPath();
+              ctxGX.arc(toScreenX(1), syB, 3.5, 0, Math.PI * 2);
+              ctxGX.fill();
+              drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag, chord.muB, '#94a3b8');
+            }
+          });
+        }
       }
 
-      // 7. Draw Selected Composition Vertical Line & Equilibrium Point on GX
+      // 11. Draw Selected Composition Vertical Line & Equilibrium Point on GX
       const selSX = toScreenX(state.selectedX);
       ctxGX.strokeStyle = '#a855f7';
       ctxGX.lineWidth = 1.5;
@@ -1596,115 +1830,6 @@
       ctxGX.lineTo(selSX, h - pad.bottom);
       ctxGX.stroke();
       ctxGX.setLineDash([]);
-
-      // Find equilibrium state at state.selectedX
-      const X0 = state.selectedX;
-      let activeChord = null;
-      let activeChordIndex = -1;
-      for (let i = 0; i < eq.chords.length; i++) {
-        const ch = eq.chords[i];
-        if (X0 >= ch.x1 && X0 <= ch.x2) {
-          activeChord = ch;
-          activeChordIndex = i;
-          break;
-        }
-      }
-
-      // Detect invariant point (F=0, φ=3): three phases coexist specifically at the junction composition
-      let isAtInvariantPoint = false;
-      let invariantPointX = 0;
-      let invariantPhaseText = '';
-      let invariantChord1 = null, invariantChord2 = null;
-      if (eq.chords.length >= 2) {
-        for (let ci = 0; ci < eq.chords.length - 1; ci++) {
-          const c1 = eq.chords[ci];
-          const c2 = eq.chords[ci + 1];
-          const gap = Math.abs(c1.x2 - c2.x1);
-          const dSlope = Math.abs(c1.slope - c2.slope);
-          const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
-          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
-          if (meetsAtIntermediate && hasLiquid && dSlope < 2.0) {
-            const xJunction = (c1.x2 + c2.x1) / 2;
-            if (Math.abs(X0 - xJunction) <= 0.035) {
-              isAtInvariantPoint = true;
-              invariantPointX = xJunction;
-              invariantChord1 = c1;
-              invariantChord2 = c2;
-              if (state.preset === 'eutectic') {
-                invariantPhaseText = 'Liquid + Solid (α₁) + Solid (α₂)';
-              } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
-                invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
-              } else if (state.hasCompound) {
-                const cForm = getCompoundInfo().formula;
-                if (c2.x2 <= state.compX + 0.05) {
-                  invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
-                } else {
-                  invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
-                }
-              } else {
-                invariantPhaseText = 'Three Coexisting Phases';
-              }
-              break;
-            }
-          }
-        }
-      }
-
-      // Fallback check against cached invariant points
-      if (!isAtInvariantPoint && cachedInvariants) {
-        if (state.preset === 'eutectic') {
-          const inv = cachedInvariants.eutectic;
-          if (inv && Math.abs(T - inv.T) <= 2 && Math.abs(X0 - inv.x) <= 0.04) {
-            isAtInvariantPoint = true;
-            invariantPointX = inv.x;
-            invariantPhaseText = 'Liquid + Solid (α₁) + Solid (α₂)';
-          }
-        } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
-          const inv = state.preset === 'eutectic_2' ? cachedInvariants.eutectic : cachedInvariants.peritectic;
-          if (inv && Math.abs(T - inv.T) <= 2 && Math.abs(X0 - inv.x) <= 0.04) {
-            isAtInvariantPoint = true;
-            invariantPointX = inv.x;
-            invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
-          }
-        } else if (state.hasCompound) {
-          const inv1 = cachedInvariants.e1;
-          const inv2 = cachedInvariants.e2;
-          const cForm = getCompoundInfo().formula;
-          if (inv1 && Math.abs(T - inv1.T) <= 2 && Math.abs(X0 - inv1.x) <= 0.04) {
-            isAtInvariantPoint = true;
-            invariantPointX = inv1.x;
-            invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
-          } else if (inv2 && Math.abs(T - inv2.T) <= 2 && Math.abs(X0 - inv2.x) <= 0.04) {
-            isAtInvariantPoint = true;
-            invariantPointX = inv2.x;
-            invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
-          }
-        }
-      }
-
-      // Single-phase candidate evaluation at X0
-      const gl0 = G_liquid(X0, T);
-      const gs0 = G_solid(X0, T);
-      const cand = [
-        { id: 0, g: gl0, fn: (x) => G_liquid(x, T) },
-        { id: 1, g: gs0, fn: (x) => G_solid(x, T) }
-      ];
-      if (state.hasBeta) cand.push({ id: 2, g: G_beta(X0, T), fn: (x) => G_beta(x, T) });
-      if (state.hasCompound) cand.push({ id: 3, g: G_compound(X0, T), fn: (x) => G_compound(x, T) });
-      cand.sort((a, b) => a.g - b.g);
-      const bestPhase = cand[0];
-
-      // Tangent to lowest curve at X0
-      const eps = 1e-4;
-      let xP = Math.min(1.0, X0 + eps);
-      let xM = Math.max(0.0, X0 - eps);
-      if (xP - xM < eps) {
-        if (X0 < 0.5) xP = xM + eps;
-        else xM = xP - eps;
-      }
-      const dG0 = (bestPhase.fn(xP) - bestPhase.fn(xM)) / (xP - xM);
-      const singleMuA = X0 <= 1e-5 ? bestPhase.g : bestPhase.g - X0 * dG0;
-      const singleMuB = X0 >= 1 - 1e-5 ? bestPhase.g : bestPhase.g + (1 - X0) * dG0;
 
       // Draw point of interest on GX lower envelope
       const currentEqG = activeChord ? (activeChord.y1 + activeChord.slope * (X0 - activeChord.x1)) : bestPhase.g;
@@ -1718,7 +1843,7 @@
         ctxGX.stroke();
       }
 
-      // 8. Update Readout Cards
+      // 12. Update Readout Cards
       const elPhases = document.getElementById('readout-phases');
       const elDof = document.getElementById('readout-dof');
       const elMuA = document.getElementById('readout-muA');
@@ -1729,7 +1854,6 @@
       const isPureComp_Tm = state.hasCompound && (Math.abs(X0 - state.compX) <= 0.015) && Math.abs(T - (state.TmComp || 1550)) <= 5;
 
       if (isAtInvariantPoint) {
-        // Three-phase coexistence specifically at invariant point (e.g. eutectic point): F = 0
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">${invariantPhaseText}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Invariant Point)</span>`;
         elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 3, <i>C</i> = 2 (Invariant Point)</span>`;
       } else if (isPureA_Tm) {
@@ -1742,7 +1866,6 @@
         elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Compound (${getCompoundInfo().formula}) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at congruent melting point (<i>T</i><sub>m,comp</sub> = ${Math.round(state.TmComp || 1550)} K)</span>`;
         elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 2 (Congruent Melting Extremum)</span>`;
       } else if (activeChord) {
-        // Two-phase coexistence on a tie-line (away from invariant composition): F = 1
         const p1Name = getPhaseName(activeChord.id1, activeChord.x1);
         const p2Name = getPhaseName(activeChord.id2, activeChord.x2);
         const getPhaseClass = (id) => {
@@ -1778,56 +1901,96 @@
         }
       }
 
-      // Chemical potentials: report all active chords if multiple exist, highlighting the active one
+      // Chemical potentials: dynamically report all active chords, highlighting active tie-line or single-phase tangent
       if (isAtInvariantPoint) {
         const cInv = invariantChord1 || eq.chords[0];
-        elMuA.innerHTML = `<span class="font-mono text-rose-300 font-bold text-sm">${cInv.muA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept</span>`;
-        elMuB.innerHTML = `<span class="font-mono text-rose-300 font-bold text-sm">${cInv.muB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept</span>`;
-      } else if (eq.chords.length >= 2) {
-        const c1 = eq.chords[0];
-        const c2 = eq.chords[1];
-        const isC1 = activeChordIndex === 0;
-        const isC2 = activeChordIndex === 1;
+        elMuA.innerHTML = `<span class="font-mono text-rose-300 font-bold text-sm">${cInv.muA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept (x=0)</span>`;
+        elMuB.innerHTML = `<span class="font-mono text-rose-300 font-bold text-sm">${cInv.muB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept (x=1)</span>`;
+      } else if (activeChord) {
+        if (eq.chords.length > 1) {
+          const listMuA = eq.chords.map((ch, idx) => {
+            const isCur = (idx === activeChordIndex);
+            return `<div class="flex justify-between items-center text-[11px] ${isCur ? 'text-amber-300 font-bold' : 'text-slate-400'}">
+              <span>${isCur ? `▸ TL ${idx + 1}:` : `TL ${idx + 1}:`}</span>
+              <span class="font-mono">${ch.muA.toFixed(1)} kJ/mol</span>
+            </div>`;
+          }).join('');
+          elMuA.innerHTML = `<div class="space-y-0.5 leading-tight">${listMuA}<span class="text-[10px] text-amber-400/80 block font-normal pt-0.5 border-t border-slate-700">Active Tie-Line Intercept (x=0)</span></div>`;
 
-        elMuA.innerHTML = `
-          <div class="space-y-0.5 leading-tight">
-            <div class="flex justify-between items-center text-[11px] ${isC1 ? 'text-amber-300 font-bold' : 'text-slate-400'}">
-              <span>${isC1 ? '▸ TL 1:' : 'TL 1:'}</span>
-              <span class="font-mono">${c1.muA.toFixed(1)} kJ/mol</span>
-            </div>
-            <div class="flex justify-between items-center text-[11px] ${isC2 ? 'text-amber-300 font-bold' : 'text-slate-400'}">
-              <span>${isC2 ? '▸ TL 2:' : 'TL 2:'}</span>
-              <span class="font-mono">${c2.muA.toFixed(1)} kJ/mol</span>
-            </div>
-            ${!activeChord ? `<div class="text-[10px] text-purple-300 border-t border-slate-700 pt-0.5">Sel. <i>x</i>: <span class="font-mono">${singleMuA.toFixed(1)} kJ/mol</span></div>` : ''}
-          </div>
-        `;
-
-        elMuB.innerHTML = `
-          <div class="space-y-0.5 leading-tight">
-            <div class="flex justify-between items-center text-[11px] ${isC1 ? 'text-amber-300 font-bold' : 'text-slate-400'}">
-              <span>${isC1 ? '▸ TL 1:' : 'TL 1:'}</span>
-              <span class="font-mono">${c1.muB.toFixed(1)} kJ/mol</span>
-            </div>
-            <div class="flex justify-between items-center text-[11px] ${isC2 ? 'text-amber-300 font-bold' : 'text-slate-400'}">
-              <span>${isC2 ? '▸ TL 2:' : 'TL 2:'}</span>
-              <span class="font-mono">${c2.muB.toFixed(1)} kJ/mol</span>
-            </div>
-            ${!activeChord ? `<div class="text-[10px] text-purple-300 border-t border-slate-700 pt-0.5">Sel. <i>x</i>: <span class="font-mono">${singleMuB.toFixed(1)} kJ/mol</span></div>` : ''}
-          </div>
-        `;
-      } else if (eq.chords.length === 1) {
-        const c = eq.chords[0];
-        if (activeChord) {
-          elMuA.innerHTML = `<span class="font-mono text-amber-300 font-bold text-sm">${c.muA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Common Tangent Intercept</span>`;
-          elMuB.innerHTML = `<span class="font-mono text-amber-300 font-bold text-sm">${c.muB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Common Tangent Intercept</span>`;
+          const listMuB = eq.chords.map((ch, idx) => {
+            const isCur = (idx === activeChordIndex);
+            return `<div class="flex justify-between items-center text-[11px] ${isCur ? 'text-amber-300 font-bold' : 'text-slate-400'}">
+              <span>${isCur ? `▸ TL ${idx + 1}:` : `TL ${idx + 1}:`}</span>
+              <span class="font-mono">${ch.muB.toFixed(1)} kJ/mol</span>
+            </div>`;
+          }).join('');
+          elMuB.innerHTML = `<div class="space-y-0.5 leading-tight">${listMuB}<span class="text-[10px] text-amber-400/80 block font-normal pt-0.5 border-t border-slate-700">Active Tie-Line Intercept (x=1)</span></div>`;
         } else {
-          elMuA.innerHTML = `<span class="font-mono text-purple-300 font-medium text-sm">${singleMuA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Single-Phase (TL: ${c.muA.toFixed(1)})</span>`;
-          elMuB.innerHTML = `<span class="font-mono text-purple-300 font-medium text-sm">${singleMuB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Single-Phase (TL: ${c.muB.toFixed(1)})</span>`;
+          elMuA.innerHTML = `<span class="font-mono text-amber-300 font-bold text-sm">${activeChord.muA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Tie-Line Intercept (x=0)</span>`;
+          elMuB.innerHTML = `<span class="font-mono text-amber-300 font-bold text-sm">${activeChord.muB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Tie-Line Intercept (x=1)</span>`;
         }
       } else {
-        elMuA.innerHTML = `<span class="font-mono text-purple-300 font-medium text-sm">${singleMuA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Tangent at <i>x</i><sub>B</sub> = ${X0.toFixed(2)}</span>`;
-        elMuB.innerHTML = `<span class="font-mono text-purple-300 font-medium text-sm">${singleMuB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Tangent at <i>x</i><sub>B</sub> = ${X0.toFixed(2)}</span>`;
+        const phaseAbbr = getPhaseAbbr(bestPhase.id, X0);
+        const isNearComp = state.hasCompound && Math.abs(X0 - state.compX) <= 0.015;
+        if (isNearComp && eq.chords.length >= 2) {
+          const cL = eq.chords.find(c => c.x2 <= state.compX + 0.02) || eq.chords[0];
+          const cR = eq.chords.find(c => c.x1 >= state.compX - 0.02) || eq.chords[eq.chords.length - 1];
+          elMuA.innerHTML = `
+            <div class="space-y-0.5 leading-tight">
+              <div class="flex justify-between items-center text-[11px] text-purple-300">
+                <span>Left TL:</span><span class="font-mono">${cL.muA.toFixed(1)} kJ/mol</span>
+              </div>
+              <div class="flex justify-between items-center text-[11px] text-purple-300">
+                <span>Right TL:</span><span class="font-mono">${cR.muA.toFixed(1)} kJ/mol</span>
+              </div>
+              <span class="text-[10px] text-slate-400 block font-normal pt-0.5 border-t border-slate-700">Step across compound (x=0)</span>
+            </div>
+          `;
+          elMuB.innerHTML = `
+            <div class="space-y-0.5 leading-tight">
+              <div class="flex justify-between items-center text-[11px] text-purple-300">
+                <span>Left TL:</span><span class="font-mono">${cL.muB.toFixed(1)} kJ/mol</span>
+              </div>
+              <div class="flex justify-between items-center text-[11px] text-purple-300">
+                <span>Right TL:</span><span class="font-mono">${cR.muB.toFixed(1)} kJ/mol</span>
+              </div>
+              <span class="text-[10px] text-slate-400 block font-normal pt-0.5 border-t border-slate-700">Step across compound (x=1)</span>
+            </div>
+          `;
+        } else if (eq.chords.length > 0) {
+          const listMuA = eq.chords.map((ch, idx) => {
+            return `<div class="flex justify-between items-center text-[10px] text-slate-400">
+              <span>TL ${idx + 1}:</span><span class="font-mono">${ch.muA.toFixed(1)} kJ/mol</span>
+            </div>`;
+          }).join('');
+          elMuA.innerHTML = `
+            <div class="space-y-0.5 leading-tight">
+              <div class="flex justify-between items-center text-[11px] text-purple-300 font-bold">
+                <span>Tangent (${phaseAbbr}):</span><span class="font-mono">${singleMuA.toFixed(1)} kJ/mol</span>
+              </div>
+              ${listMuA}
+              <span class="text-[10px] text-purple-400/80 block font-normal pt-0.5 border-t border-slate-700">Single-Phase Intercept (x=0)</span>
+            </div>
+          `;
+
+          const listMuB = eq.chords.map((ch, idx) => {
+            return `<div class="flex justify-between items-center text-[10px] text-slate-400">
+              <span>TL ${idx + 1}:</span><span class="font-mono">${ch.muB.toFixed(1)} kJ/mol</span>
+            </div>`;
+          }).join('');
+          elMuB.innerHTML = `
+            <div class="space-y-0.5 leading-tight">
+              <div class="flex justify-between items-center text-[11px] text-purple-300 font-bold">
+                <span>Tangent (${phaseAbbr}):</span><span class="font-mono">${singleMuB.toFixed(1)} kJ/mol</span>
+              </div>
+              ${listMuB}
+              <span class="text-[10px] text-purple-400/80 block font-normal pt-0.5 border-t border-slate-700">Single-Phase Intercept (x=1)</span>
+            </div>
+          `;
+        } else {
+          elMuA.innerHTML = `<span class="font-mono text-purple-300 font-bold text-sm">${singleMuA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Tangent Intercept (${phaseAbbr}, x=0)</span>`;
+          elMuB.innerHTML = `<span class="font-mono text-purple-300 font-bold text-sm">${singleMuB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Tangent Intercept (${phaseAbbr}, x=1)</span>`;
+        }
       }
     }
 
@@ -1836,7 +1999,7 @@
       const dim = setupCanvas(canvasTX, ctxTX);
       const w = dim.width;
       const h = dim.height;
-      const pad = { left: 68, right: 35, top: 30, bottom: 40 };
+      const pad = { left: 68, right: 58, top: 28, bottom: 40 };
 
       ctxTX.clearRect(0, 0, w, h);
 
@@ -2297,7 +2460,7 @@
 
     function handleXSelection(canvas, e) {
       const pos = getPointerPos(canvas, e);
-      const padLeft = 68, padRight = 35;
+      const padLeft = 68, padRight = 58;
       const plotW = pos.width - padLeft - padRight;
       if (pos.x >= padLeft && pos.x <= pos.width - padRight) {
         state.selectedX = Math.max(0.0, Math.min(1.0, (pos.x - padLeft) / plotW));
@@ -2307,7 +2470,7 @@
 
     function handleTXSelection(canvas, e) {
       const pos = getPointerPos(canvas, e);
-      const padTop = 30, padBottom = 40;
+      const padTop = 28, padBottom = 40;
       const plotH = pos.height - padTop - padBottom;
       if (pos.y >= padTop && pos.y <= pos.height - padBottom) {
         const frac = 1 - ((pos.y - padTop) / plotH);
