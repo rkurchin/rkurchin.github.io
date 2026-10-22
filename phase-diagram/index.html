@@ -184,9 +184,9 @@
                 <span class="font-medium text-slate-300 truncate"><i>T</i><sub>m,A</sub> (Pure A)</span>
                 <span id="val-tmA" class="font-mono text-amber-300 font-semibold text-xs whitespace-nowrap ml-1">1000 K</span>
               </div>
-              <input type="range" id="slider-tmA" min="700" max="1800" step="25" value="1000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 block" title="Tm(A)" oninput="onParamChange()">
+              <input type="range" id="slider-tmA" min="600" max="1800" step="25" value="1000" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 block" title="Tm(A)" oninput="onParamChange()">
               <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] font-mono">
-                <span>700 K</span>
+                <span>600 K</span>
                 <span>1800 K</span>
               </div>
             </div>
@@ -197,9 +197,9 @@
                 <span class="font-medium text-slate-300 truncate"><i>T</i><sub>m,B</sub> (Pure B)</span>
                 <span id="val-tmB" class="font-mono text-amber-300 font-semibold text-xs whitespace-nowrap ml-1">1500 K</span>
               </div>
-              <input type="range" id="slider-tmB" min="700" max="1800" step="25" value="1500" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 block" title="Tm(B)" oninput="onParamChange()">
+              <input type="range" id="slider-tmB" min="600" max="1800" step="25" value="1500" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500 block" title="Tm(B)" oninput="onParamChange()">
               <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] font-mono">
-                <span>700 K</span>
+                <span>600 K</span>
                 <span>1800 K</span>
               </div>
             </div>
@@ -219,10 +219,10 @@
                 <span class="font-medium text-slate-300 truncate">Melting Point (<i>T</i><sub>m,comp</sub>)</span>
                 <span id="val-hcomp" class="font-mono text-fuchsia-300 font-semibold text-xs whitespace-nowrap ml-1">1550 K</span>
               </div>
-              <input type="range" id="slider-hcomp" min="1350" max="1750" step="25" value="1550" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-fuchsia-500 block" title="Compound Melting Point" oninput="onParamChange()">
+              <input type="range" id="slider-hcomp" min="1000" max="1700" step="25" value="1550" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-fuchsia-500 block" title="Compound Melting Point" oninput="onParamChange()">
               <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] font-mono">
-                <span>1350 K</span>
-                <span>1750 K</span>
+                <span>1000 K</span>
+                <span>1700 K</span>
               </div>
             </div>
 
@@ -427,7 +427,7 @@
         name: 'Isomorphous',
         prototypeSystem: 'e.g. Ge–Si, Cu–Ni',
         prototypeDesc: 'Isostructural single solid solution (continuous lattice across full composition range; complete liquid and solid miscibility).',
-        T: 1250, Tmin: 700, Tmax: 1800,
+        T: 1250, Tmin: 600, Tmax: 1800,
         TmA: 1000, TmB: 1550,
         omegaL: 0, omegaS: 0,
         hasCompound: false,
@@ -439,7 +439,7 @@
         name: 'Eutectic (1 Lattice)',
         prototypeSystem: 'e.g. Ag–Cu',
         prototypeDesc: 'Single parent crystal structure (FCC); positive solid mixing enthalpy (<i>&Omega;</i><sub>S</sub> ≫ 0) drives isostructural separation into <i>&alpha;</i><sub>1</sub> and <i>&alpha;</i><sub>2</sub> solid solutions (miscibility gap).',
-        T: 1100, Tmin: 700, Tmax: 1700,
+        T: 1100, Tmin: 600, Tmax: 1700,
         TmA: 1150, TmB: 1450,
         omegaL: 2.0, omegaS: 24.0, // High positive solid enthalpy creates two-phase region
         hasCompound: false,
@@ -464,7 +464,7 @@
         name: 'Congruent Line Compound',
         prototypeSystem: 'e.g. Mg–Si (Mg₂Si)',
         prototypeDesc: 'Stoichiometric intermediate compound (narrow free energy well) with congruent melting and flanking eutectic reactions on either side. Adjust stoichiometry to explore prototypes like Mg₂Si (A₂B), equiatomic AB, or Laves phases (AB₂).',
-        T: 1200, Tmin: 700, Tmax: 1800,
+        T: 1200, Tmin: 600, Tmax: 1800,
         TmA: 1150, TmB: 1300,
         TmComp: 1550,
         omegaL: -4.0, omegaS: 24.0,
@@ -479,7 +479,7 @@
         name: 'Peritectic',
         prototypeSystem: 'e.g. Pt–Re, Fe–C',
         prototypeDesc: 'Competing crystal structures with widely separated melting points (<i>T</i><sub>m,B</sub> ≫ <i>T</i><sub>m,A</sub>); liquid reacts with high-melting solid to form low-melting solid.',
-        T: 1400, Tmin: 800, Tmax: 1900,
+        T: 1400, Tmin: 600, Tmax: 1900,
         TmA: 1000, TmB: 1800,
         omegaL: 0.0, omegaS: 0.0,
         omegaAlpha: -4.0, omegaBeta: 4.0,
@@ -745,45 +745,85 @@
       updateCachedInvariants();
     }
 
-    // Helper: Dynamically find invariant temperatures from cached grid
-    function getCompoundEutectics() {
-      let te1 = 1075, te2 = 1175;
-      if (!cachedTXGrid || cachedTXGrid.length === 0) return { te1, te2 };
+    // Helper: Robust eutectic scanner for line compound subsystems
+    function findCompoundEutectic(side) {
       const cx = state.compX || 0.5;
+      const isLeft = (side === 'left');
+      let best = null;
+      let minSlopeDiff = 999;
 
-      for (let i = 0; i < cachedTXGrid.length - 1; i++) {
-        const row = cachedTXGrid[i];
-        const nextRow = cachedTXGrid[i + 1];
-        const hasSolidCompoundChordL = row.chords.some(c => 
-          c.x1 < cx * 0.6 && Math.abs(c.x2 - cx) < 0.08 && 
-          ((c.id1 === 1 && c.id2 === 3) || (c.id1 === 3 && c.id2 === 1))
-        );
-        const nextHasLiquidL = nextRow.chords.some(c => 
-          (c.id1 === 0 || c.id2 === 0) && c.x1 < cx && c.x2 <= cx + 0.06
-        );
-        if (hasSolidCompoundChordL && nextHasLiquidL) {
-          te1 = Math.round((row.T + nextRow.T) / 2);
-          break;
+      // Coarse sweep every 10 K to find bracket where liquid first appears on this side
+      let tBracket = null;
+      for (let t = state.Tmin; t <= state.Tmax; t += 10) {
+        const eq = computeEquilibrium(t, 200);
+        const chordsOnSide = eq.chords.filter(c => isLeft ? (c.x1 < cx && c.x2 <= cx + 0.04) : (c.x1 >= cx - 0.04 && c.x2 > cx));
+        for (let i = 0; i < chordsOnSide.length - 1; i++) {
+          const c1 = chordsOnSide[i];
+          const c2 = chordsOnSide[i + 1];
+          const gap = Math.abs(c1.x2 - c2.x1);
+          // Eutectic reaction invariant strictly meets at Liquid (id 0), never at the compound (id 3)
+          const meetsAtLiquid = (c1.id2 === 0 && c2.id1 === 0) && gap < 0.06;
+          if (meetsAtLiquid) {
+            const xJunc = (c1.x2 + c2.x1) / 2;
+            const validPos = isLeft ? (xJunc < cx - 0.02) : (xJunc > cx + 0.02);
+            if (validPos) {
+              tBracket = t;
+              break;
+            }
+          }
+        }
+        if (tBracket !== null) break;
+      }
+
+      if (tBracket === null) {
+        const tEnd = isLeft ? state.TmA : state.TmB;
+        const tmComp = state.TmComp || 1550;
+        const estT = Math.round(Math.min(tEnd, tmComp) * 0.85);
+        const estX = isLeft ? Number((cx * 0.35).toFixed(2)) : Number((cx + (1 - cx) * 0.65).toFixed(2));
+        return { T: estT, x: estX };
+      }
+
+      // Fine sweep around tBracket in 1 K steps
+      for (let t = Math.max(state.Tmin, tBracket - 15); t <= Math.min(state.Tmax, tBracket + 15); t += 1) {
+        const eq = computeEquilibrium(t, 250);
+        const chordsOnSide = eq.chords.filter(c => isLeft ? (c.x1 < cx && c.x2 <= cx + 0.04) : (c.x1 >= cx - 0.04 && c.x2 > cx));
+        for (let i = 0; i < chordsOnSide.length - 1; i++) {
+          const c1 = chordsOnSide[i];
+          const c2 = chordsOnSide[i + 1];
+          const gap = Math.abs(c1.x2 - c2.x1);
+          const dSlope = Math.abs(c1.slope - c2.slope);
+          const meetsAtLiquid = (c1.id2 === 0 && c2.id1 === 0) && gap < 0.06;
+          if (meetsAtLiquid) {
+            const xJunc = (c1.x2 + c2.x1) / 2;
+            const validPos = isLeft ? (xJunc < cx - 0.02) : (xJunc > cx + 0.02);
+            if (validPos && dSlope < minSlopeDiff) {
+              minSlopeDiff = dSlope;
+              best = { 
+                T: Math.round(t), 
+                x: Number(xJunc.toFixed(3)), 
+                dSlope,
+                span: isLeft ? [Number(c1.x1.toFixed(3)), cx] : [cx, Number(c2.x2.toFixed(3))]
+              };
+            }
+          }
         }
       }
 
-      for (let i = 0; i < cachedTXGrid.length - 1; i++) {
-        const row = cachedTXGrid[i];
-        const nextRow = cachedTXGrid[i + 1];
-        const hasSolidCompoundChordR = row.chords.some(c => 
-          Math.abs(c.x1 - cx) < 0.08 && c.x2 > cx + (1 - cx) * 0.35 && 
-          ((c.id1 === 3 && c.id2 === 1) || (c.id1 === 1 && c.id2 === 3))
-        );
-        const nextHasLiquidR = nextRow.chords.some(c => 
-          (c.id1 === 0 || c.id2 === 0) && c.x1 >= cx - 0.06 && c.x2 > cx
-        );
-        if (hasSolidCompoundChordR && nextHasLiquidR) {
-          te2 = Math.round((row.T + nextRow.T) / 2);
-          break;
-        }
+      if (!best) {
+        const estX = isLeft ? Number((cx * 0.35).toFixed(2)) : Number((cx + (1 - cx) * 0.65).toFixed(2));
+        return { T: tBracket || 1000, x: estX, span: isLeft ? [0.01, cx] : [cx, 0.99] };
       }
+      return best;
+    }
 
-      return { te1, te2 };
+    // Helper: Dynamically find invariant temperatures from cached invariants
+    function getCompoundEutectics() {
+      if (cachedInvariants && cachedInvariants.e1 && cachedInvariants.e2) {
+        return { te1: cachedInvariants.e1.T, te2: cachedInvariants.e2.T };
+      }
+      const e1 = findCompoundEutectic('left');
+      const e2 = findCompoundEutectic('right');
+      return { te1: e1.T, te2: e2.T };
     }
 
     function getEutecticTemp() {
@@ -832,12 +872,17 @@
             const c2 = eq.chords[i + 1];
             const gap = Math.abs(c1.x2 - c2.x1);
             const dSlope = Math.abs(c1.slope - c2.slope);
-            const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
-            const meets = (c1.id2 === c2.id1) && gap < 0.06;
-            if (meets && hasLiquid && (!filterFn || filterFn(t, (c1.x2 + c2.x1) / 2))) {
+            const meetsAtLiquid = (c1.id2 === 0 && c2.id1 === 0) && gap < 0.06;
+            if (meetsAtLiquid && (!filterFn || filterFn(t, (c1.x2 + c2.x1) / 2))) {
               if (dSlope < minSlopeDiff) {
                 minSlopeDiff = dSlope;
-                best = { T: Math.round(t), x: Number(((c1.x2 + c2.x1) / 2).toFixed(3)), dSlope, gap };
+                best = { 
+                  T: Math.round(t), 
+                  x: Number(((c1.x2 + c2.x1) / 2).toFixed(3)), 
+                  dSlope, 
+                  gap,
+                  span: [Number(c1.x1.toFixed(3)), Number(c2.x2.toFixed(3))]
+                };
               }
             }
           }
@@ -867,7 +912,12 @@
             if (meetsAtAlpha && hasLiquid && gap < 0.15) {
               if (dSlope < minSlopeDiff) {
                 minSlopeDiff = dSlope;
-                best = { T: Math.round(t), x: Number(((c1.x2 + c2.x1) / 2).toFixed(3)), dSlope };
+                best = { 
+                  T: Math.round(t), 
+                  x: Number(((c1.x2 + c2.x1) / 2).toFixed(3)), 
+                  dSlope,
+                  span: [Number(c1.x1.toFixed(3)), Number(c2.x2.toFixed(3))]
+                };
               }
             }
           }
@@ -883,7 +933,8 @@
           if (hasAlphaLow && hasLBHigh) {
             const ch = eqLow.chords.find(c => (c.id1 === 1 && c.id2 === 2) || (c.id1 === 2 && c.id2 === 1));
             const xPos = ch ? ch.x1 : 0.73;
-            best = { T: Math.round(t), x: Number(xPos.toFixed(3)), dSlope: 0 };
+            const xRight = ch ? ch.x2 : 0.94;
+            best = { T: Math.round(t), x: Number(xPos.toFixed(3)), dSlope: 0, span: [0.70, Number(xRight.toFixed(3))] };
             break;
           }
         }
@@ -897,14 +948,19 @@
       cachedInvariants = {};
       if (state.preset === 'eutectic' || state.preset === 'eutectic_2') {
         const teEst = getEutecticTemp();
-        cachedInvariants.eutectic = scanInvariantPoint(teEst) || { T: teEst, x: 0.38 };
+        let inv = scanInvariantPoint(teEst);
+        if (!inv) {
+          const eq = computeEquilibrium(teEst, 250);
+          const xLeft = (eq.chords.length > 0) ? eq.chords[0].x1 : 0.05;
+          const xRight = (eq.chords.length > 0) ? eq.chords[eq.chords.length - 1].x2 : 0.95;
+          inv = { T: teEst, x: 0.38, span: [Number(xLeft.toFixed(3)), Number(xRight.toFixed(3))] };
+        }
+        cachedInvariants.eutectic = inv;
       } else if (state.preset === 'peritectic') {
-        cachedInvariants.peritectic = findPeritecticInvariant() || { T: getPeritecticTemp(), x: 0.75 };
+        cachedInvariants.peritectic = findPeritecticInvariant() || { T: getPeritecticTemp(), x: 0.75, span: [0.70, 0.94] };
       } else if (state.hasCompound) {
-        const ce = getCompoundEutectics();
-        const cx = state.compX || 0.5;
-        cachedInvariants.e1 = scanInvariantPoint(ce.te1, (t, x) => x < cx) || { T: ce.te1, x: Number((cx * 0.25).toFixed(2)) };
-        cachedInvariants.e2 = scanInvariantPoint(ce.te2, (t, x) => x > cx) || { T: ce.te2, x: Number((cx + (1 - cx) * 0.75).toFixed(2)) };
+        cachedInvariants.e1 = findCompoundEutectic('left');
+        cachedInvariants.e2 = findCompoundEutectic('right');
       }
     }
 
@@ -1282,9 +1338,11 @@
           const c2 = eq.chords[ci + 1];
           const gap = Math.abs(c1.x2 - c2.x1);
           const dSlope = Math.abs(c1.slope - c2.slope);
-          const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
-          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
-          if (meetsAtIntermediate && hasLiquid && dSlope < 2.0) {
+          const isPeritectic = (state.preset === 'peritectic');
+          const meetsAtIntermediate = isPeritectic 
+            ? ((c1.id2 === 1 && c2.id1 === 1) && gap < 0.05)
+            : ((c1.id2 === 0 && c2.id1 === 0) && gap < 0.05);
+          if (meetsAtIntermediate && dSlope < 2.0) {
             const xJunction = (c1.x2 + c2.x1) / 2;
             if (Math.abs(X0 - xJunction) <= 0.035) {
               isAtInvariantPoint = true;
@@ -1297,7 +1355,7 @@
                 invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
               } else if (state.hasCompound) {
                 const cForm = getCompoundInfo().formula;
-                if (c2.x2 <= state.compX + 0.05) {
+                if (xJunction < state.compX) {
                   invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
                 } else {
                   invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
@@ -2165,39 +2223,44 @@
         const badgeCX = Math.max(pad.left + 85, Math.min(w - pad.right - 85, cx));
         drawPhaseBadge(`Line Compound ${cForm} (Tₘ=${Math.round(tmComp)} K)`, badgeCX, cyTop - 12, '#f0abfc', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(217, 70, 239, 0.5)');
 
-        const te1 = (cachedInvariants && cachedInvariants.e1) ? cachedInvariants.e1.T : getCompoundEutectics().te1;
-        const te2 = (cachedInvariants && cachedInvariants.e2) ? cachedInvariants.e2.T : getCompoundEutectics().te2;
-        // Draw horizontal invariant eutectic reaction shelves on either side
+        const inv1 = (cachedInvariants && cachedInvariants.e1) ? cachedInvariants.e1 : findCompoundEutectic('left');
+        const inv2 = (cachedInvariants && cachedInvariants.e2) ? cachedInvariants.e2 : findCompoundEutectic('right');
+        const te1 = inv1.T;
+        const te2 = inv2.T;
+        const span1 = (inv1 && inv1.span) ? inv1.span : [0.01, state.compX];
+        const span2 = (inv2 && inv2.span) ? inv2.span : [state.compX, 0.99];
+
+        // Draw horizontal invariant eutectic reaction shelves on either side (only at actual shelf)
         ctxTX.strokeStyle = '#f59e0b';
-        ctxTX.lineWidth = 1;
-        ctxTX.setLineDash([3, 3]);
+        ctxTX.lineWidth = 1.5;
+        ctxTX.setLineDash([]);
         // Left Eutectic E1
         const syE1 = toScreenY(te1);
         ctxTX.beginPath();
-        ctxTX.moveTo(toScreenX(0.01), syE1);
-        ctxTX.lineTo(toScreenX(state.compX), syE1);
+        ctxTX.moveTo(toScreenX(span1[0]), syE1);
+        ctxTX.lineTo(toScreenX(span1[1]), syE1);
         ctxTX.stroke();
         // Right Eutectic E2
         const syE2 = toScreenY(te2);
         ctxTX.beginPath();
-        ctxTX.moveTo(toScreenX(state.compX), syE2);
-        ctxTX.lineTo(toScreenX(0.99), syE2);
+        ctxTX.moveTo(toScreenX(span2[0]), syE2);
+        ctxTX.lineTo(toScreenX(span2[1]), syE2);
         ctxTX.stroke();
-        ctxTX.setLineDash([]);
       }
 
       if (state.preset === 'peritectic') {
-        const tp = (cachedInvariants && cachedInvariants.peritectic) ? cachedInvariants.peritectic.T : getPeritecticTemp();
+        const inv = (cachedInvariants && cachedInvariants.peritectic) ? cachedInvariants.peritectic : findPeritecticInvariant();
+        const tp = inv ? inv.T : getPeritecticTemp();
+        const span = (inv && inv.span) ? inv.span : [0.70, 0.94];
         const syP = toScreenY(tp);
-        // Draw horizontal invariant peritectic shelf
+        // Draw horizontal invariant peritectic shelf (only at actual shelf)
         ctxTX.strokeStyle = '#f59e0b';
-        ctxTX.lineWidth = 1;
-        ctxTX.setLineDash([3, 3]);
-        ctxTX.beginPath();
-        ctxTX.moveTo(toScreenX(0.01), syP);
-        ctxTX.lineTo(toScreenX(0.95), syP);
-        ctxTX.stroke();
+        ctxTX.lineWidth = 1.5;
         ctxTX.setLineDash([]);
+        ctxTX.beginPath();
+        ctxTX.moveTo(toScreenX(span[0]), syP);
+        ctxTX.lineTo(toScreenX(span[1]), syP);
+        ctxTX.stroke();
 
         const tMidL_Beta = Math.min(state.Tmax - 40, (tp + state.TmB) / 2);
         const tMidL_Alpha = (state.TmA + tp) / 2;
@@ -2211,19 +2274,19 @@
         drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(0.65), toScreenY(tMidL_Beta));
         drawTwoPhaseBadge('L', '#60a5fa', 'α', '#22c55e', toScreenX(0.12), toScreenY(tMidL_Alpha));
         drawTwoPhaseBadge('α', '#22c55e', 'β', '#bef264', toScreenX(0.50), toScreenY(tMidAlphaBeta));
-        drawPhaseBadge(`Peritectic Shelf: L + β ⇄ α (${tp} K)`, toScreenX(0.48), syP, '#f59e0b', '12px ui-sans-serif', 'rgba(15, 23, 42, 0.9)', 'rgba(245, 158, 11, 0.5)');
       } else if (state.preset === 'eutectic' || state.preset === 'eutectic_2') {
-        const te = (cachedInvariants && cachedInvariants.eutectic) ? cachedInvariants.eutectic.T : getEutecticTemp();
+        const inv = (cachedInvariants && cachedInvariants.eutectic) ? cachedInvariants.eutectic : scanInvariantPoint(getEutecticTemp());
+        const te = inv ? inv.T : getEutecticTemp();
+        const span = (inv && inv.span) ? inv.span : [0.05, 0.95];
         const syE = toScreenY(te);
-        // Draw horizontal invariant eutectic shelf
+        // Draw horizontal invariant eutectic shelf (only at actual shelf)
         ctxTX.strokeStyle = '#f59e0b';
-        ctxTX.lineWidth = 1;
-        ctxTX.setLineDash([3, 3]);
-        ctxTX.beginPath();
-        ctxTX.moveTo(toScreenX(0.02), syE);
-        ctxTX.lineTo(toScreenX(0.98), syE);
-        ctxTX.stroke();
+        ctxTX.lineWidth = 1.5;
         ctxTX.setLineDash([]);
+        ctxTX.beginPath();
+        ctxTX.moveTo(toScreenX(span[0]), syE);
+        ctxTX.lineTo(toScreenX(span[1]), syE);
+        ctxTX.stroke();
 
         const tMidLA = (state.TmA + te) / 2;
         const tMidLB = (state.TmB + te) / 2;
@@ -2244,7 +2307,6 @@
           drawTwoPhaseBadge('L', '#60a5fa', 'α', '#22c55e', toScreenX(xPosLA), toScreenY(tMidLA));
           drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(xPosLB), toScreenY(tMidLB));
           drawTwoPhaseBadge('α', '#22c55e', 'β', '#bef264', pad.left + (w - pad.left - pad.right) / 2, toScreenY(tMidAlphaBeta));
-          drawPhaseBadge(`Eutectic Shelf: L ⇄ α + β (${te} K)`, pad.left + (w - pad.left - pad.right) / 2, syE, '#f59e0b', '12px ui-sans-serif', 'rgba(15, 23, 42, 0.9)', 'rgba(245, 158, 11, 0.5)');
         } else {
           // Eutectic 1 Lattice (Single parent structure, miscibility gap): alpha_1 and alpha_2 both in Lime (#bef264)
           drawPhaseBadge('Solid (α₁)', toScreenX(0.05), toScreenY(tMidAlpha), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
@@ -2252,7 +2314,6 @@
           drawTwoPhaseBadge('L', '#60a5fa', 'α₁', '#bef264', toScreenX(xPosLA), toScreenY(tMidLA));
           drawTwoPhaseBadge('L', '#60a5fa', 'α₂', '#bef264', toScreenX(xPosLB), toScreenY(tMidLB));
           drawTwoPhaseBadge('α₁', '#bef264', 'α₂', '#bef264', pad.left + (w - pad.left - pad.right) / 2, toScreenY(tMidAlphaBeta));
-          drawPhaseBadge(`Eutectic Shelf: L ⇄ α₁ + α₂ (${te} K)`, pad.left + (w - pad.left - pad.right) / 2, syE, '#f59e0b', '12px ui-sans-serif', 'rgba(15, 23, 42, 0.9)', 'rgba(245, 158, 11, 0.5)');
         }
       } else if (state.hasCompound) {
         const te1 = (cachedInvariants && cachedInvariants.e1) ? cachedInvariants.e1.T : getCompoundEutectics().te1;
@@ -2289,10 +2350,6 @@
         drawTwoPhaseBadge('L', '#60a5fa', cForm, '#f0abfc', toScreenX(xLComp1), toScreenY(tMidLComp1));
         drawTwoPhaseBadge(cForm, '#f0abfc', 'L', '#60a5fa', toScreenX(xLComp2), toScreenY(tMidLComp2));
         drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(xLB), toScreenY(tMidLB));
-
-        // Dynamic Eutectic reaction labels
-        drawPhaseBadge(`E₁: L ⇄ α + ${cForm} (${te1} K)`, toScreenX(xMidLeft), syE1, '#f59e0b', '12px ui-sans-serif', 'rgba(15, 23, 42, 0.9)', 'rgba(245, 158, 11, 0.5)');
-        drawPhaseBadge(`E₂: L ⇄ ${cForm} + β (${te2} K)`, toScreenX(xMidRight), syE2, '#f59e0b', '12px ui-sans-serif', 'rgba(15, 23, 42, 0.9)', 'rgba(245, 158, 11, 0.5)');
 
         // Sub-eutectic solid two-phase fields placed at true vertical midpoints
         drawTwoPhaseBadge('α', '#bef264', cForm, '#f0abfc', toScreenX(xMidLeft), toScreenY((state.Tmin + te1) / 2));
@@ -2334,9 +2391,11 @@
           const c2 = eqNow.chords[ci + 1];
           const gap = Math.abs(c1.x2 - c2.x1);
           const dSlope = Math.abs(c1.slope - c2.slope);
-          const hasLiquid = (c1.id1 === 0 || c1.id2 === 0 || c2.id1 === 0 || c2.id2 === 0);
-          const meetsAtIntermediate = (c1.id2 === c2.id1) && gap < 0.05;
-          if (meetsAtIntermediate && hasLiquid && dSlope < 2.0) {
+          const isPeritectic = (state.preset === 'peritectic');
+          const meetsAtIntermediate = isPeritectic 
+            ? ((c1.id2 === 1 && c2.id1 === 1) && gap < 0.05)
+            : ((c1.id2 === 0 && c2.id1 === 0) && gap < 0.05);
+          if (meetsAtIntermediate && dSlope < 2.0) {
             const xJunction = (c1.x2 + c2.x1) / 2;
             if (Math.abs(state.selectedX - xJunction) <= 0.035) {
               isAtInvariantPointTX = true;
