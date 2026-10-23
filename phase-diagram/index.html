@@ -108,11 +108,11 @@
             <span class="font-semibold text-amber-400">Temperature (<i>T</i>)</span>
             <span id="val-temp" class="font-mono font-bold text-amber-300">1200 K</span>
           </div>
-          <input type="range" id="slider-temp" min="600" max="2000" step="10" value="1200" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="onTempChange(this.value)">
+          <input type="range" id="slider-temp" min="600" max="1550" step="10" value="1200" class="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer" oninput="onTempChange(this.value)">
           <div class="flex justify-between text-[11px] text-[var(--muted-foreground,#94a3b8)] font-mono">
-            <span>600 K</span>
+            <span id="lbl-temp-min">600 K</span>
             <span>(&part;<i>g</i>/&part;<i>T</i> = &minus;<i>s</i>)</span>
-            <span>2000 K</span>
+            <span id="lbl-temp-max">1550 K</span>
           </div>
         </div>
 
@@ -399,8 +399,8 @@
     let state = {
       preset: 'isomorphous',
       T: 1250,
-      Tmin: 700,
-      Tmax: 1800,
+      Tmin: 600,
+      Tmax: 1550,
       TmA: 1000,
       TmB: 1550,
       omegaL: 0.0,
@@ -427,44 +427,44 @@
         name: 'Isomorphous',
         prototypeSystem: 'e.g. Ge–Si, Cu–Ni',
         prototypeDesc: 'Isostructural single solid solution (continuous lattice across full composition range; complete liquid and solid miscibility).',
-        T: 1250, Tmin: 600, Tmax: 1800,
+        T: 1250, Tmin: 600, Tmax: 1550,
         TmA: 1000, TmB: 1550,
         omegaL: 0, omegaS: 0,
         hasCompound: false,
         hasBeta: false,
-        gMin: -20.0,
-        gMax: 8.0
+        gMin: -14.0,
+        gMax: 12.0
       },
       eutectic: {
         name: 'Eutectic (1 Lattice)',
         prototypeSystem: 'e.g. Ag–Cu',
         prototypeDesc: 'Single parent crystal structure (FCC); positive solid mixing enthalpy (<i>&Omega;</i><sub>S</sub> ≫ 0) drives isostructural separation into <i>&alpha;</i><sub>1</sub> and <i>&alpha;</i><sub>2</sub> solid solutions (miscibility gap).',
-        T: 1100, Tmin: 600, Tmax: 1700,
+        T: 1100, Tmin: 600, Tmax: 1450,
         TmA: 1150, TmB: 1450,
         omegaL: 2.0, omegaS: 24.0, // High positive solid enthalpy creates two-phase region
         hasCompound: false,
         hasBeta: false,
-        gMin: -16.0,
-        gMax: 8.0
+        gMin: -12.0,
+        gMax: 10.0
       },
       eutectic_2: {
         name: 'Eutectic (2 Lattices)',
         prototypeSystem: 'e.g. Al–Si',
         prototypeDesc: 'Two competing crystal structures (FCC Al + Diamond-Cubic Si) with distinct free energy curves, independent mixing enthalpies (<i>&Omega;</i><sub>&alpha;</sub>, <i>&Omega;</i><sub>&beta;</sub>), and lattice stability penalties.',
-        T: 900, Tmin: 600, Tmax: 1600,
+        T: 900, Tmin: 600, Tmax: 1400,
         TmA: 1000, TmB: 1400,
         omegaL: -2.0, omegaS: 12.0,
         omegaAlpha: 12.0, omegaBeta: 12.0,
         hasCompound: false,
         hasBeta: true,
-        gMin: -16.0,
-        gMax: 8.0
+        gMin: -12.0,
+        gMax: 10.0
       },
       compound: {
         name: 'Congruent Line Compound',
         prototypeSystem: 'e.g. Mg–Si (Mg₂Si)',
         prototypeDesc: 'Stoichiometric intermediate compound (narrow free energy well) with congruent melting and flanking eutectic reactions on either side. Adjust stoichiometry to explore prototypes like Mg₂Si (A₂B), equiatomic AB, or Laves phases (AB₂).',
-        T: 1200, Tmin: 600, Tmax: 1800,
+        T: 1200, Tmin: 600, Tmax: 1550,
         TmA: 1150, TmB: 1300,
         TmComp: 1550,
         omegaL: -4.0, omegaS: 24.0,
@@ -472,21 +472,21 @@
         compX: 0.5,
         compCurv: 3500,
         hasBeta: false,
-        gMin: -20.0,
+        gMin: -16.0,
         gMax: 8.0
       },
       peritectic: {
         name: 'Peritectic',
         prototypeSystem: 'e.g. Pt–Re, Fe–C',
         prototypeDesc: 'Competing crystal structures with widely separated melting points (<i>T</i><sub>m,B</sub> ≫ <i>T</i><sub>m,A</sub>); liquid reacts with high-melting solid to form low-melting solid.',
-        T: 1400, Tmin: 600, Tmax: 1900,
+        T: 1400, Tmin: 600, Tmax: 1800,
         TmA: 1000, TmB: 1800,
         omegaL: 0.0, omegaS: 0.0,
         omegaAlpha: -4.0, omegaBeta: 4.0,
         hasCompound: false,
         hasBeta: true,
         gMin: -16.0,
-        gMax: 8.0
+        gMax: 16.0
       }
     };
 
@@ -506,6 +506,88 @@
         ticks.push(val);
       }
       return { ticks, step };
+    }
+
+    // Helper: Compute smallest optimal Y-axis bounds for g(x) curves across all temperatures [Tmin, Tmax]
+    function getOptimalGYBounds() {
+      let minVal = 999;
+      let maxVal = -999;
+
+      const numSamples = 60;
+      // Sample curves at Tmax (lowest free energy curve extrema)
+      for (let i = 0; i <= numSamples; i++) {
+        const x = 0.005 + 0.99 * (i / numSamples);
+        const gl = G_liquid(x, state.Tmax);
+        const gs = G_solid(x, state.Tmax);
+        minVal = Math.min(minVal, gl, gs);
+        if (state.hasBeta) {
+          minVal = Math.min(minVal, G_beta(x, state.Tmax));
+        }
+        if (state.hasCompound) {
+          if (Math.abs(x - state.compX) <= 0.04) {
+            minVal = Math.min(minVal, G_compound(x, state.Tmax));
+          }
+        }
+      }
+
+      // Sample curves at Tmin (highest free energy curve extrema)
+      for (let i = 0; i <= numSamples; i++) {
+        const x = 0.005 + 0.99 * (i / numSamples);
+        const gl = G_liquid(x, state.Tmin);
+        const gs = G_solid(x, state.Tmin);
+        maxVal = Math.max(maxVal, gl, gs);
+        if (state.hasBeta) {
+          maxVal = Math.max(maxVal, G_beta(x, state.Tmin));
+        }
+        if (state.hasCompound) {
+          if (Math.abs(x - state.compX) <= 0.04) {
+            maxVal = Math.max(maxVal, G_compound(x, state.Tmin));
+          }
+        }
+      }
+
+      // Account for breakdown enthalpy peak if positive
+      const maxOmega = Math.max(state.omegaL || 0, state.omegaS || 0, state.omegaAlpha || 0, state.omegaBeta || 0);
+      if (maxOmega > 0) {
+        maxVal = Math.max(maxVal, maxOmega * 0.25);
+      }
+
+      // Modest padding (1.0 kJ) so curve extrema do not collide with plot frame
+      const targetMin = minVal - 1.0;
+      const targetMax = maxVal + 1.0;
+      const range = targetMax - targetMin;
+
+      let step = 2;
+      if (range > 24) step = 4;
+      else if (range > 14) step = 2;
+      else step = 2;
+
+      const gMin = Math.floor(targetMin / step) * step;
+      const gMax = Math.ceil(targetMax / step) * step;
+
+      return { gMin, gMax, step };
+    }
+
+    // Helper: Dynamically update Tmax to highest melting point and synchronize temperature slider and labels
+    function updateDynamicTMax() {
+      const maxTm = Math.max(state.TmA, state.TmB, state.hasCompound ? (state.TmComp || 1550) : 0);
+      state.Tmax = Math.max(state.Tmin + 100, Math.round(maxTm));
+      const sliderTemp = document.getElementById('slider-temp');
+      if (sliderTemp) {
+        sliderTemp.min = state.Tmin;
+        sliderTemp.max = state.Tmax;
+        if (state.T > state.Tmax) state.T = state.Tmax;
+        else if (state.T < state.Tmin) state.T = state.Tmin;
+        sliderTemp.value = state.T;
+      }
+      const lblMin = document.getElementById('lbl-temp-min');
+      const lblMax = document.getElementById('lbl-temp-max');
+      if (lblMin) lblMin.innerText = `${state.Tmin} K`;
+      if (lblMax) lblMax.innerText = `${state.Tmax} K`;
+      const valTemp = document.getElementById('val-temp');
+      if (valTemp) valTemp.innerText = `${Math.round(state.T)} K`;
+      const lblCurr = document.getElementById('label-curr-temp');
+      if (lblCurr) lblCurr.innerText = `${Math.round(state.T)} K`;
     }
 
     // Helper: Phase naming
@@ -533,37 +615,43 @@
       return 'ph';
     }
 
-    // Helper: Draw chemical potential labels with clean Roman subscripts, numeric value, and badge styling
-    function drawMuLabel(ctx, sub, x, y, align, tag = '', val = null, color = '#38bdf8') {
+    // Helper: Draw axis header text with proper Roman subscripts on canvas
+    function drawAxisHeaderWithSubscript(ctx, baseText, muChar, subChar, x, y, align = 'center') {
       ctx.save();
+      ctx.fillStyle = '#94a3b8';
       ctx.textBaseline = 'middle';
-      const valText = (val !== null && isFinite(val)) ? ` = ${val.toFixed(1)} kJ` : '';
-      const tagText = tag ? ` [${tag.replace(/[()]/g, '')}]` : ` (${sub})`;
-      const fullText = `μ${sub}${valText}${tagText}`;
 
-      ctx.font = 'bold 10px ui-monospace, SFMono-Regular, monospace';
-      const textW = ctx.measureText(fullText).width;
-      const boxW = textW + 12;
-      const boxH = 18;
-      const boxX = (align === 'left') ? x : (x - boxW);
+      const mainFont = 'bold 10px ui-sans-serif, system-ui';
+      const subFont = 'bold 8px ui-sans-serif, system-ui';
 
-      // Pill badge background
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      if (ctx.roundRect) {
-        ctx.roundRect(boxX, y - boxH / 2, boxW, boxH, 4);
-      } else {
-        ctx.rect(boxX, y - boxH / 2, boxW, boxH);
-      }
-      ctx.fill();
-      ctx.stroke();
+      ctx.font = mainFont;
+      const part1 = `${baseText} (${muChar}`;
+      const sub = subChar;
+      const part2 = ')';
 
-      // Text render
+      const w1 = ctx.measureText(part1).width;
+      ctx.font = subFont;
+      const wSub = ctx.measureText(sub).width;
+      ctx.font = mainFont;
+      const w2 = ctx.measureText(part2).width;
+
+      const totalW = w1 + wSub + w2;
+      let curX = (align === 'center') ? (x - totalW / 2) : (align === 'right' ? (x - totalW) : x);
+
+      // Draw "Pure A (μ"
       ctx.textAlign = 'left';
-      ctx.fillStyle = color;
-      ctx.fillText(fullText, boxX + 6, y);
+      ctx.fillText(part1, curX, y);
+      curX += w1;
+
+      // Draw subscript "A" / "B" slightly lowered
+      ctx.font = subFont;
+      ctx.fillText(sub, curX, y + 2.5);
+      curX += wSub;
+
+      // Draw ")"
+      ctx.font = mainFont;
+      ctx.fillText(part2, curX, y);
+
       ctx.restore();
     }
 
@@ -1089,10 +1177,10 @@
       state.omegaAlpha = p.omegaAlpha !== undefined ? p.omegaAlpha : p.omegaS;
       state.omegaBeta = p.omegaBeta !== undefined ? p.omegaBeta : p.omegaS;
 
+      // Update dynamic Tmax and slider bounds
+      updateDynamicTMax();
+
       // Sync slider inputs
-      document.getElementById('slider-temp').min = state.Tmin;
-      document.getElementById('slider-temp').max = state.Tmax;
-      document.getElementById('slider-temp').value = state.T;
       document.getElementById('slider-omegaL').value = state.omegaL;
       document.getElementById('slider-tmA').value = state.TmA;
       document.getElementById('slider-tmB').value = state.TmB;
@@ -1237,6 +1325,7 @@
           state.compX = stoich.x;
         }
       }
+      updateDynamicTMax();
       updateParamLabels();
       computeTXPhaseDiagram();
       redraw();
@@ -1425,32 +1514,8 @@
       const singleMuA = X0 <= 1e-5 ? bestPhase.g : bestPhase.g - X0 * dG0;
       const singleMuB = X0 >= 1 - 1e-5 ? bestPhase.g : bestPhase.g + (1 - X0) * dG0;
 
-      // 2. Dynamic Y Extent: accommodates all chord intercepts, single-phase intercepts, and curves
-      const presetGMin = (PRESETS[state.preset] && PRESETS[state.preset].gMin !== undefined) ? PRESETS[state.preset].gMin : -20.0;
-      const presetGMax = (PRESETS[state.preset] && PRESETS[state.preset].gMax !== undefined) ? PRESETS[state.preset].gMax : 8.0;
-      let targetMin = presetGMin;
-      let targetMax = presetGMax;
-
-      for (const ch of eq.chords) {
-        if (ch.muA < targetMin && ch.muA > -70) targetMin = ch.muA;
-        if (ch.muB < targetMin && ch.muB > -70) targetMin = ch.muB;
-      }
-      if (!activeChord) {
-        if (singleMuA < targetMin && singleMuA > -45 && X0 >= 0.05) targetMin = singleMuA;
-        if (singleMuB < targetMin && singleMuB > -45 && X0 <= 0.95) targetMin = singleMuB;
-      }
-
-      targetMin -= 2.0; // padding so dots and badges sit comfortably inside plot bounds
-      const range = targetMax - targetMin;
-      let step = 4;
-      if (range <= 10) step = 1;
-      else if (range <= 22) step = 4;
-      else if (range <= 32) step = 4;
-      else if (range <= 50) step = 5;
-      else step = 10;
-
-      const gMin = Math.floor(targetMin / step) * step;
-      const gMax = Math.ceil(targetMax / step) * step;
+      // 2. Dynamic Y Extent: smallest range showing all curve features across all temperatures
+      const { gMin, gMax, step } = getOptimalGYBounds();
 
       // Coordinate transforms
       function toScreenX(x) {
@@ -1507,12 +1572,9 @@
         ctxGX.stroke();
       });
 
-      // Pure A and Pure B header labels at top of axes
-      ctxGX.font = 'bold 10px ui-sans-serif, system-ui';
-      ctxGX.fillStyle = '#94a3b8';
-      ctxGX.textAlign = 'center';
-      ctxGX.fillText('Pure A (μ_A)', pad.left, pad.top - 12);
-      ctxGX.fillText('Pure B (μ_B)', w - pad.right, pad.top - 12);
+      // Pure A and Pure B header labels at top of axes with clean subscripts
+      drawAxisHeaderWithSubscript(ctxGX, 'Pure A', 'μ', 'A', pad.left, pad.top - 12, 'center');
+      drawAxisHeaderWithSubscript(ctxGX, 'Pure B', 'μ', 'B', w - pad.right, pad.top - 12, 'center');
 
       // X-axis ticks
       ctxGX.font = '11px ui-monospace, SFMono-Regular, monospace';
@@ -1801,9 +1863,6 @@
                 ctxGX.strokeStyle = '#ffffff';
                 ctxGX.lineWidth = 1;
                 ctxGX.stroke();
-                drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag, chord.muA, color);
-              } else if (eq.chords.length <= 3) {
-                drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag, chord.muA, color);
               }
             }
 
@@ -1818,18 +1877,14 @@
                 ctxGX.strokeStyle = '#ffffff';
                 ctxGX.lineWidth = 1;
                 ctxGX.stroke();
-                drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag, chord.muB, color);
-              } else if (eq.chords.length <= 3) {
-                drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag, chord.muB, color);
               }
             }
           });
         } else {
           // Single-phase field: draw single-phase tangent intercepts and any background chord intercepts
-          const phaseAbbr = getPhaseAbbr(bestPhase.id, X0);
           const color = '#c084fc'; // Purple
 
-          // Intercept dot & label at X = 0 (Pure A): μ_A
+          // Intercept dot at X = 0 (Pure A): μ_A
           if (isFinite(singleMuA) && singleMuA >= gMin && singleMuA <= gMax) {
             const syA = toScreenY(singleMuA);
             ctxGX.fillStyle = color;
@@ -1839,10 +1894,9 @@
             ctxGX.strokeStyle = '#ffffff';
             ctxGX.lineWidth = 1;
             ctxGX.stroke();
-            drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', phaseAbbr, singleMuA, color);
           }
 
-          // Intercept dot & label at X = 1 (Pure B): μ_B
+          // Intercept dot at X = 1 (Pure B): μ_B
           if (isFinite(singleMuB) && singleMuB >= gMin && singleMuB <= gMax) {
             const syB = toScreenY(singleMuB);
             ctxGX.fillStyle = color;
@@ -1852,19 +1906,16 @@
             ctxGX.strokeStyle = '#ffffff';
             ctxGX.lineWidth = 1;
             ctxGX.stroke();
-            drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', phaseAbbr, singleMuB, color);
           }
 
           // Also draw background chords in muted slate
-          eq.chords.forEach((chord, chordIdx) => {
-            const tag = eq.chords.length > 1 ? `TL ${chordIdx + 1}` : 'TL';
+          eq.chords.forEach((chord) => {
             if (chord.muA >= gMin && chord.muA <= gMax) {
               const syA = toScreenY(chord.muA);
               ctxGX.fillStyle = '#64748b';
               ctxGX.beginPath();
               ctxGX.arc(toScreenX(0), syA, 3.5, 0, Math.PI * 2);
               ctxGX.fill();
-              drawMuLabel(ctxGX, 'A', toScreenX(0) + 8, syA, 'left', tag, chord.muA, '#94a3b8');
             }
             if (chord.muB >= gMin && chord.muB <= gMax) {
               const syB = toScreenY(chord.muB);
@@ -1872,7 +1923,6 @@
               ctxGX.beginPath();
               ctxGX.arc(toScreenX(1), syB, 3.5, 0, Math.PI * 2);
               ctxGX.fill();
-              drawMuLabel(ctxGX, 'B', toScreenX(1) - 8, syB, 'right', tag, chord.muB, '#94a3b8');
             }
           });
         }
@@ -2078,9 +2128,15 @@
       ctxTX.font = '11px ui-monospace, monospace';
       ctxTX.textAlign = 'right';
       ctxTX.textBaseline = 'middle';
-      const numTTicks = 6;
-      for (let i = 0; i <= numTTicks; i++) {
-        const tVal = state.Tmin + (i / numTTicks) * (state.Tmax - state.Tmin);
+      const tRange = state.Tmax - state.Tmin;
+      const tStep = tRange > 600 ? 200 : 100;
+      const tTicks = [];
+      for (let t = Math.ceil(state.Tmin / tStep) * tStep; t < state.Tmax - tStep * 0.35; t += tStep) {
+        tTicks.push(t);
+      }
+      tTicks.push(state.Tmax);
+
+      tTicks.forEach(tVal => {
         const sy = toScreenY(tVal);
         ctxTX.fillText(`${Math.round(tVal)}K`, pad.left - 8, sy);
 
@@ -2089,7 +2145,7 @@
         ctxTX.moveTo(pad.left, sy);
         ctxTX.lineTo(w - pad.right, sy);
         ctxTX.stroke();
-      }
+      });
 
       // Composition Ticks (x)
       ctxTX.textAlign = 'center';
