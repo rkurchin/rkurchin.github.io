@@ -833,16 +833,54 @@
       updateCachedInvariants();
     }
 
+    // Helper: lowest T (1 K steps) at which liquid sits on the hull between a terminal solid and the compound
+    // Needed when the eutectic hugs a pure end (e.g. Mg-Mg2Si): its L + solid region is < 0.02 wide, so no chord pair forms
+    function findFirstLiquidOnSide(isLeft, cx) {
+      const onSide = p => p.id === 0 && (isLeft ? p.x < cx - 0.02 : p.x > cx + 0.02);
+      const tEnd = isLeft ? state.TmA : state.TmB;
+      const tmComp = state.TmComp || 1550;
+      const tMaxSearch = Math.min(tEnd, tmComp) - 1;
+      // coarse 10 K sweep upward from Tmin
+      let tHit = null;
+      for (let t = state.Tmin; t <= tMaxSearch; t += 10) {
+        if (computeEquilibrium(t, 250).hull.some(onSide)) { tHit = t; break; }
+      }
+      if (tHit === null || tHit === state.Tmin) return null;
+      // 1 K refinement inside the bracketing 10 K step
+      for (let t = tHit - 9; t <= Math.min(tHit, tMaxSearch); t += 1) {
+        const eq = computeEquilibrium(t, 250);
+        const liq = eq.hull.filter(onSide);
+        if (liq.length === 0) continue;
+        // not a eutectic if liquid enters at the grid edge (pure end) or only above the compound's melting point
+        const xEdge = isLeft ? eq.hull[0].x : eq.hull[eq.hull.length - 1].x;
+        if (liq.some(p => Math.abs(p.x - xEdge) < 1e-9) || t >= tmComp || t >= tEnd) return null;
+        // eutectic liquid = mean x of the vanishing liquid window
+        const xE = liq.reduce((s, p) => s + p.x, 0) / liq.length;
+        // shelf runs from the terminal solid next to that liquid to the compound
+        const solids = eq.hull.filter(p => (p.id === 1 || p.id === 2) && (isLeft ? p.x < xE : p.x > xE)).map(p => p.x);
+        const xSol = solids.length ? (isLeft ? Math.max(...solids) : Math.min(...solids)) : (isLeft ? 0.002 : 0.998);
+        return {
+          T: t,
+          x: Number(xE.toFixed(3)),
+          span: isLeft ? [Number(xSol.toFixed(3)), cx] : [cx, Number(xSol.toFixed(3))]
+        };
+      }
+      return null;
+    }
+
     // Helper: Robust eutectic scanner for line compound subsystems
     function findCompoundEutectic(side) {
       const cx = state.compX || 0.5;
       const isLeft = (side === 'left');
+      const tEnd = isLeft ? state.TmA : state.TmB;
+      const tmComp = state.TmComp || 1550;
+      const tMaxSearch = Math.min(tEnd, tmComp) - 1;
       let best = null;
       let minSlopeDiff = 999;
 
       // Coarse sweep every 10 K to find bracket where liquid first appears on this side
       let tBracket = null;
-      for (let t = state.Tmin; t <= state.Tmax; t += 10) {
+      for (let t = state.Tmin; t <= tMaxSearch; t += 10) {
         const eq = computeEquilibrium(t, 200);
         const chordsOnSide = eq.chords.filter(c => isLeft ? (c.x1 < cx && c.x2 <= cx + 0.04) : (c.x1 >= cx - 0.04 && c.x2 > cx));
         for (let i = 0; i < chordsOnSide.length - 1; i++) {
@@ -864,15 +902,16 @@
       }
 
       if (tBracket === null) {
-        const tEnd = isLeft ? state.TmA : state.TmB;
-        const tmComp = state.TmComp || 1550;
-        const estT = Math.round(Math.min(tEnd, tmComp) * 0.85);
+        // no chord pair found: locate the eutectic from where liquid first appears on this side
+        const firstLiquid = findFirstLiquidOnSide(isLeft, cx);
+        if (firstLiquid) return firstLiquid;
+        const estT = Math.max(state.Tmin, Math.round(Math.min(tEnd, tmComp) * 0.85));
         const estX = isLeft ? Number((cx * 0.35).toFixed(2)) : Number((cx + (1 - cx) * 0.65).toFixed(2));
-        return { T: estT, x: estX };
+        return { T: estT, x: estX, span: isLeft ? [0.01, cx] : [cx, 0.99] };
       }
 
       // Fine sweep around tBracket in 1 K steps
-      for (let t = Math.max(state.Tmin, tBracket - 15); t <= Math.min(state.Tmax, tBracket + 15); t += 1) {
+      for (let t = Math.max(state.Tmin, tBracket - 15); t <= Math.min(state.Tmax, tBracket + 15, tMaxSearch); t += 1) {
         const eq = computeEquilibrium(t, 250);
         const chordsOnSide = eq.chords.filter(c => isLeft ? (c.x1 < cx && c.x2 <= cx + 0.04) : (c.x1 >= cx - 0.04 && c.x2 > cx));
         for (let i = 0; i < chordsOnSide.length - 1; i++) {
@@ -898,8 +937,11 @@
       }
 
       if (!best) {
+        const firstLiquid = findFirstLiquidOnSide(isLeft, cx);
+        if (firstLiquid) return firstLiquid;
+        const estT = Math.max(state.Tmin, Math.min(tBracket || 1000, tMaxSearch));
         const estX = isLeft ? Number((cx * 0.35).toFixed(2)) : Number((cx + (1 - cx) * 0.65).toFixed(2));
-        return { T: tBracket || 1000, x: estX, span: isLeft ? [0.01, cx] : [cx, 0.99] };
+        return { T: estT, x: estX, span: isLeft ? [0.01, cx] : [cx, 0.99] };
       }
       return best;
     }
