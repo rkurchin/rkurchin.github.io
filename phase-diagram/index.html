@@ -295,26 +295,6 @@
           <canvas id="canvas-gx" class="w-full h-full block cursor-crosshair touch-none" style="touch-action: none;"></canvas>
           <div id="gx-tooltip" class="absolute hidden pointer-events-none bg-slate-900/90 text-slate-100 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 shadow-md backdrop-blur-sm z-10"></div>
         </div>
-
-        <!-- Tangent & Chemical Potential Readout -->
-        <div class="mt-3 pt-3 border-t border-[var(--border,#334155)] grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[68px]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Eq. Phases (at <i>x</i><sub>sel</sub>):</span>
-            <div id="readout-phases" class="font-semibold text-blue-400 text-sm">Liquid + Solid</div>
-          </div>
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[68px]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block text-xs">Species A &mu;<sub>A</sub> (intercept at <i>x</i><sub>B</sub>=0):</span>
-            <div id="readout-muA" class="font-mono font-medium text-slate-200 text-sm">-14.2 kJ/mol</div>
-          </div>
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[68px]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block text-xs">Species B &mu;<sub>B</sub> (intercept at <i>x</i><sub>B</sub>=1):</span>
-            <div id="readout-muB" class="font-mono font-medium text-slate-200 text-sm">-18.6 kJ/mol</div>
-          </div>
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[68px]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block text-xs" title="Isobaric Gibbs Phase Rule: F = C - &phi; + 1">Phase Rule (<i>F</i> at <i>x</i><sub>sel</sub>):</span>
-            <div id="readout-dof" class="font-semibold text-amber-400 text-sm"><i>F</i> = 1 (Tie-line)</div>
-          </div>
-        </div>
       </div>
 
       <!-- RIGHT PANEL: Phase Diagram T-x -->
@@ -340,21 +320,68 @@
           <canvas id="canvas-tx" class="w-full h-full block cursor-crosshair touch-none" style="touch-action: none;"></canvas>
           <div id="tx-tooltip" class="absolute hidden pointer-events-none bg-slate-900/90 text-slate-100 text-xs px-2.5 py-1.5 rounded-lg border border-slate-700 shadow-md backdrop-blur-sm z-10"></div>
         </div>
+      </div>
 
-        <!-- Lever Rule & Composition Readout -->
-        <div class="mt-3 pt-3 border-t border-[var(--border,#334155)] grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Selected Comp. (<i>x</i><sub>B</sub>):</span>
-            <span id="readout-comp" class="font-mono font-medium text-slate-200"><i>x</i><sub>B</sub> = 0.40</span>
+      <!-- UNIFIED STATUS & READOUTS DECK (Bridges both plots, with shared state centered) -->
+      <div class="col-span-1 lg:col-span-2 bg-[var(--card,#1e293b)] border border-[var(--border,#334155)] rounded-2xl p-3 sm:p-4 shadow-lg">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-stretch">
+          
+          <!-- Left Section: Chemical Potentials (g(x) Intercepts) -->
+          <div class="lg:col-span-3 flex flex-col justify-between gap-1.5 p-2.5 rounded-xl bg-[var(--background,#0f172a)]/50 border border-[var(--border,#334155)]">
+            <div class="text-[11px] font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider flex items-center justify-between pb-1 border-b border-[var(--border,#334155)]/50">
+              <span>Free Energy <span class="normal-case font-serif italic text-xs">&mu;</span> Intercepts</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 flex-1">
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Species A &mu;<sub>A</sub> (<i>x</i><sub>B</sub>=0):</span>
+                <div id="readout-muA" class="font-mono font-medium text-slate-200 text-xs sm:text-sm">-14.2 kJ/mol</div>
+              </div>
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Species B &mu;<sub>B</sub> (<i>x</i><sub>B</sub>=1):</span>
+                <div id="readout-muB" class="font-mono font-medium text-slate-200 text-xs sm:text-sm">-18.6 kJ/mol</div>
+              </div>
+            </div>
           </div>
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)]">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Phase Boundary Ends:</span>
-            <span id="readout-tieline" class="font-mono font-medium text-blue-300"><i>x</i><sub>L</sub> = 0.31 &nbsp;|&nbsp; <i>x</i><sub>S</sub> = 0.62</span>
+
+          <!-- Center Section: Shared System State (Applies to Both Plots!) -->
+          <div class="lg:col-span-4 flex flex-col justify-between gap-1.5 p-2.5 rounded-xl bg-[var(--background,#0f172a)]/50 border border-[var(--border,#334155)]">
+            <div class="text-[11px] font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider flex items-center justify-between pb-1 border-b border-[var(--border,#334155)]/50">
+              <span>Active State (Both Plots)</span>
+              <span class="text-[10px] text-slate-400 font-mono lowercase">cursor x<sub>B</sub> &bull; T</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 flex-1">
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Selected Comp. (<i>x</i><sub>B</sub>):</span>
+                <span id="readout-comp" class="font-mono font-semibold text-slate-200 text-xs sm:text-sm"><i>x</i><sub>B</sub> = 0.40</span>
+              </div>
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Equilibrium Phases:</span>
+                <div id="readout-phases" class="font-semibold text-xs sm:text-sm">Liquid + Solid</div>
+              </div>
+            </div>
           </div>
-          <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] col-span-2 sm:col-span-1">
-            <span class="text-[var(--muted-foreground,#94a3b8)] block">Lever Rule Fractions:</span>
-            <span id="readout-lever" class="font-mono font-semibold text-amber-400"><i>f</i><sub>L</sub> = 71%, <i>f</i><sub>S</sub> = 29%</span>
+
+          <!-- Right Section: Phase Diagram & Lever Rule (Phase Diagram Side) -->
+          <div class="lg:col-span-5 flex flex-col justify-between gap-1.5 p-2.5 rounded-xl bg-[var(--background,#0f172a)]/50 border border-[var(--border,#334155)]">
+            <div class="text-[11px] font-semibold text-[var(--muted-foreground,#94a3b8)] uppercase tracking-wider flex items-center justify-between pb-1 border-b border-[var(--border,#334155)]/50">
+              <span>Phase Diagram & Equilibria (T–x)</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 flex-1">
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Boundary Limits:</span>
+                <span id="readout-tieline" class="font-mono font-medium text-blue-300 text-xs"><i>x</i><sub>L</sub> = 0.31 &nbsp;|&nbsp; <i>x</i><sub>S</sub> = 0.62</span>
+              </div>
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]">Phase Fractions:</span>
+                <span id="readout-lever" class="font-mono font-semibold text-amber-400 text-xs"><i>f</i><sub>L</sub> = 71%, <i>f</i><sub>S</sub> = 29%</span>
+              </div>
+              <div class="bg-[var(--background,#0f172a)] p-2 rounded-lg border border-[var(--border,#334155)] flex flex-col justify-between min-h-[64px]">
+                <span class="text-[var(--muted-foreground,#94a3b8)] block text-[11px]" title="Isobaric Gibbs Phase Rule: F = C - &phi; + 1">Phase Rule (<i>F</i>):</span>
+                <div id="readout-dof" class="font-semibold text-amber-400 text-xs"><i>F</i> = 1 (Tie-line)</div>
+              </div>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -1481,18 +1508,18 @@
               invariantChord1 = c1;
               invariantChord2 = c2;
               if (state.preset === 'eutectic') {
-                invariantPhaseText = 'Liquid + Solid (α₁) + Solid (α₂)';
+                invariantPhaseText = '<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-lime-400 font-semibold">Solid (α₁)</span> + <span class="text-lime-400 font-semibold">Solid (α₂)</span>';
               } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
-                invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
+                invariantPhaseText = '<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-emerald-400 font-semibold">Solid (α)</span> + <span class="text-lime-400 font-semibold">Solid (β)</span>';
               } else if (state.hasCompound) {
                 const cForm = getCompoundInfo().formula;
                 if (xJunction < state.compX) {
-                  invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
+                  invariantPhaseText = `<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-lime-400 font-semibold">Solid (α)</span> + <span class="text-fuchsia-400 font-semibold">Compound (${cForm})</span>`;
                 } else {
-                  invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
+                  invariantPhaseText = `<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-fuchsia-400 font-semibold">Compound (${cForm})</span> + <span class="text-lime-400 font-semibold">Solid (β)</span>`;
                 }
               } else {
-                invariantPhaseText = 'Three Coexisting Phases';
+                invariantPhaseText = '<span class="text-slate-100 font-semibold">Three Coexisting Phases</span>';
               }
               break;
             }
@@ -1507,14 +1534,14 @@
           if (inv && Math.abs(T - inv.T) <= 2 && Math.abs(X0 - inv.x) <= 0.04) {
             isAtInvariantPoint = true;
             invariantPointX = inv.x;
-            invariantPhaseText = 'Liquid + Solid (α₁) + Solid (α₂)';
+            invariantPhaseText = '<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-lime-400 font-semibold">Solid (α₁)</span> + <span class="text-lime-400 font-semibold">Solid (α₂)</span>';
           }
         } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
           const inv = state.preset === 'eutectic_2' ? cachedInvariants.eutectic : cachedInvariants.peritectic;
           if (inv && Math.abs(T - inv.T) <= 2 && Math.abs(X0 - inv.x) <= 0.04) {
             isAtInvariantPoint = true;
             invariantPointX = inv.x;
-            invariantPhaseText = 'Liquid + Solid (α) + Solid (β)';
+            invariantPhaseText = '<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-emerald-400 font-semibold">Solid (α)</span> + <span class="text-lime-400 font-semibold">Solid (β)</span>';
           }
         } else if (state.hasCompound) {
           const inv1 = cachedInvariants.e1;
@@ -1523,11 +1550,11 @@
           if (inv1 && Math.abs(T - inv1.T) <= 2 && Math.abs(X0 - inv1.x) <= 0.04) {
             isAtInvariantPoint = true;
             invariantPointX = inv1.x;
-            invariantPhaseText = `Liquid + Solid (α) + Compound (${cForm})`;
+            invariantPhaseText = `<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-lime-400 font-semibold">Solid (α)</span> + <span class="text-fuchsia-400 font-semibold">Compound (${cForm})</span>`;
           } else if (inv2 && Math.abs(T - inv2.T) <= 2 && Math.abs(X0 - inv2.x) <= 0.04) {
             isAtInvariantPoint = true;
             invariantPointX = inv2.x;
-            invariantPhaseText = `Liquid + Compound (${cForm}) + Solid (β)`;
+            invariantPhaseText = `<span class="text-blue-400 font-semibold">Liquid</span> + <span class="text-fuchsia-400 font-semibold">Compound (${cForm})</span> + <span class="text-lime-400 font-semibold">Solid (β)</span>`;
           }
         }
       }
@@ -2004,17 +2031,19 @@
       const isPureComp_Tm = state.hasCompound && (Math.abs(X0 - state.compX) <= 0.015) && Math.abs(T - (state.TmComp || 1550)) <= 5;
 
       if (isAtInvariantPoint) {
-        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">${invariantPhaseText}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Invariant Point)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 3, <i>C</i> = 2 (Invariant Point)</span>`;
+        elPhases.innerHTML = `${invariantPhaseText}<span class="text-[10px] text-slate-400 block font-normal">(Invariant Point)</span>`;
+        elDof.innerHTML = `<span class="text-amber-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 3, <i>C</i> = 2 (Invariant Point)</span>`;
       } else if (isPureA_Tm) {
-        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid (A) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at pure A melting point (<i>T</i><sub>m,A</sub> = ${state.TmA} K)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 1 (Pure Melting Point)</span>`;
+        const sColor = (state.preset === 'eutectic_2' || state.preset === 'peritectic') ? 'text-emerald-400' : 'text-lime-400';
+        elPhases.innerHTML = `<span class="text-blue-400 font-semibold">Liquid</span> <span class="text-slate-100 font-semibold">⇄</span> <span class="${sColor} font-semibold">Solid (A)</span><span class="text-[10px] text-slate-400 block font-normal">(Pure A Melting Point)</span>`;
+        elDof.innerHTML = `<span class="text-amber-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 1 (Pure Melting Point)</span>`;
       } else if (isPureB_Tm) {
-        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid (B) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at pure B melting point (<i>T</i><sub>m,B</sub> = ${state.TmB} K)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 1 (Pure Melting Point)</span>`;
+        elPhases.innerHTML = `<span class="text-blue-400 font-semibold">Liquid</span> <span class="text-slate-100 font-semibold">⇄</span> <span class="text-lime-400 font-semibold">Solid (B)</span><span class="text-[10px] text-slate-400 block font-normal">(Pure B Melting Point)</span>`;
+        elDof.innerHTML = `<span class="text-amber-400 font-semibold"><i>F</i> = 0</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 1 (Pure Melting Point)</span>`;
       } else if (isPureComp_Tm) {
-        elPhases.innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Compound (${getCompoundInfo().formula}) Coexistence</span><span class="text-[10px] text-slate-400 block font-normal">at congruent melting point (<i>T</i><sub>m,comp</sub> = ${Math.round(state.TmComp || 1550)} K)</span>`;
-        elDof.innerHTML = `<span class="text-rose-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 2 (Congruent Melting Extremum)</span>`;
+        const cForm = getCompoundInfo().formula;
+        elPhases.innerHTML = `<span class="text-blue-400 font-semibold">Liquid</span> <span class="text-slate-100 font-semibold">⇄</span> <span class="text-fuchsia-400 font-semibold">Compound (${cForm})</span><span class="text-[10px] text-slate-400 block font-normal">(Congruent Melting Point)</span>`;
+        elDof.innerHTML = `<span class="text-amber-400 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 2 (Congruent Melting Extremum)</span>`;
       } else if (activeChord) {
         const p1Name = getPhaseName(activeChord.id1, activeChord.x1);
         const p2Name = getPhaseName(activeChord.id2, activeChord.x2);
@@ -2026,7 +2055,7 @@
         };
         const c1Class = getPhaseClass(activeChord.id1);
         const c2Class = getPhaseClass(activeChord.id2);
-        elPhases.innerHTML = `<span class="${c1Class} font-semibold">${p1Name}</span> <span class="text-slate-100 font-semibold">+</span> <span class="${c2Class} font-semibold">${p2Name}</span><span class="text-[10px] text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Tie-line)</span>`;
+        elPhases.innerHTML = `<span class="${c1Class} font-semibold">${p1Name}</span> <span class="text-slate-100 font-semibold">+</span> <span class="${c2Class} font-semibold">${p2Name}</span><span class="text-[10px] text-slate-400 block font-normal">(Two-Phase Equilibrium)</span>`;
         elDof.innerHTML = `<span class="text-amber-300 font-semibold"><i>F</i> = 1</span><span class="text-[10px] text-slate-400 block font-normal"><i>φ</i> = 2, <i>C</i> = 2 (Tie-line)</span>`;
       } else {
         const sName = getPhaseName(bestPhase.id, X0);
@@ -2043,10 +2072,10 @@
         }
 
         if (isPure) {
-          elPhases.innerHTML = `<span class="${phaseColorClass} font-semibold">${sName} (Pure ${X0 <= 0.5 ? 'A' : 'B'})</span><span class="text-xs text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Pure Component)</span>`;
+          elPhases.innerHTML = `<span class="${phaseColorClass} font-semibold">${sName} (Pure ${X0 <= 0.5 ? 'A' : 'B'})</span><span class="text-[10px] text-slate-400 block font-normal">(Pure Component)</span>`;
           elDof.innerHTML = `<span class="${phaseColorClass} font-semibold"><i>F</i> = 1</span><span class="text-xs text-slate-400 block font-normal"><i>φ</i> = 1, <i>C</i> = 1 (Unary System)</span>`;
         } else {
-          elPhases.innerHTML = `<span class="${phaseColorClass} font-semibold">${sName}</span><span class="text-xs text-slate-400 block font-normal">at <i>x</i><sub>B</sub> = ${X0.toFixed(2)} (Single Phase)</span>`;
+          elPhases.innerHTML = `<span class="${phaseColorClass} font-semibold">${sName}</span><span class="text-[10px] text-slate-400 block font-normal">(Single Phase)</span>`;
           elDof.innerHTML = `<span class="${phaseColorClass} font-semibold"><i>F</i> = 2</span><span class="text-xs text-slate-400 block font-normal"><i>φ</i> = 1, <i>C</i> = 2 (Area)</span>`;
         }
       }
@@ -2054,8 +2083,8 @@
       // Chemical potentials: dynamically report all active chords, highlighting active tie-line or single-phase tangent
       if (isAtInvariantPoint) {
         const cInv = invariantChord1 || eq.chords[0];
-        elMuA.innerHTML = `<span class="font-mono text-rose-300 font-bold text-sm">${cInv.muA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept (x=0)</span>`;
-        elMuB.innerHTML = `<span class="font-mono text-rose-300 font-bold text-sm">${cInv.muB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept (x=1)</span>`;
+        elMuA.innerHTML = `<span class="font-mono text-amber-300 font-bold text-sm">${cInv.muA.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept (x=0)</span>`;
+        elMuB.innerHTML = `<span class="font-mono text-amber-300 font-bold text-sm">${cInv.muB.toFixed(1)} kJ/mol</span><span class="text-[10px] text-slate-400 block font-normal">Invariant Tangent Intercept (x=1)</span>`;
       } else if (activeChord) {
         if (eq.chords.length > 1) {
           const listMuA = eq.chords.map((ch, idx) => {
@@ -2235,13 +2264,13 @@
         }
       }
 
-      // Helper: Draw phase region label with semi-transparent badge pill to prevent line-through overlaps
-      function drawPhaseBadge(content, x, y, color = '#cbd5e1', font = '12px ui-sans-serif, system-ui', bg = 'rgba(15, 23, 42, 0.9)', borderColor = null) {
+      // Helper: Draw label with semi-transparent badge pill to prevent line-through overlaps
+      function drawPhaseBadge(content, x, y, color = '#cbd5e1', font = '11px ui-sans-serif, system-ui', bg = 'rgba(15, 23, 42, 0.9)', borderColor = null) {
         ctxTX.save();
         ctxTX.font = font;
         ctxTX.textBaseline = 'middle';
-        const padX = 6;
-        const hBox = 19;
+        const padX = 5;
+        const hBox = 18;
 
         if (typeof content === 'string') {
           ctxTX.textAlign = 'center';
@@ -2287,7 +2316,7 @@
       }
 
       // Helper: Draw two-phase badge (phase1 + phase2) with colored letters and crisp white parentheses and plus sign
-      function drawTwoPhaseBadge(p1, c1, p2, c2, x, y, font = 'bold 12px ui-sans-serif, system-ui', bg = 'rgba(15, 23, 42, 0.9)', borderColor = 'rgba(51, 65, 85, 0.7)') {
+      function drawTwoPhaseBadge(p1, c1, p2, c2, x, y, font = 'bold 11px ui-sans-serif, system-ui', bg = 'rgba(15, 23, 42, 0.9)', borderColor = 'rgba(51, 65, 85, 0.7)') {
         drawPhaseBadge([
           { text: '(', color: '#ffffff' },
           { text: p1, color: c1 },
@@ -2318,8 +2347,8 @@
         ctxTX.fill();
 
         const cForm = getCompoundInfo().formula;
-        const badgeCX = Math.max(pad.left + 85, Math.min(w - pad.right - 85, cx));
-        drawPhaseBadge(`Line Compound ${cForm} (Tₘ=${Math.round(tmComp)} K)`, badgeCX, cyTop - 12, '#f0abfc', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(217, 70, 239, 0.5)');
+        const badgeY = (cyTop - pad.top < 22) ? cyTop + 14 : cyTop - 10;
+        drawPhaseBadge(cForm, cx, badgeY, '#f0abfc', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(217, 70, 239, 0.5)');
 
         const inv1 = (cachedInvariants && cachedInvariants.e1) ? cachedInvariants.e1 : findCompoundEutectic('left');
         const inv2 = (cachedInvariants && cachedInvariants.e2) ? cachedInvariants.e2 : findCompoundEutectic('right');
@@ -2344,9 +2373,58 @@
         ctxTX.moveTo(toScreenX(span2[0]), syE2);
         ctxTX.lineTo(toScreenX(span2[1]), syE2);
         ctxTX.stroke();
-      }
 
-      if (state.preset === 'peritectic') {
+        // --- Phase Field Badges in Compound Diagram (Positioned away from boundaries) ---
+        const xE1 = inv1.x !== undefined ? inv1.x : state.compX * 0.25;
+        const xE2 = inv2.x !== undefined ? inv2.x : state.compX + (1 - state.compX) * 0.75;
+
+        // Liquid (L) in the wider liquid trough away from the apex
+        const xLiq = state.compX <= 0.5 ? state.compX + (1 - state.compX) * 0.45 : state.compX * 0.55;
+        drawPhaseBadge('Liquid (L)', toScreenX(xLiq), pad.top + 20, '#60a5fa', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
+
+        // Terminal solids at boundaries
+        drawPhaseBadge('Solid (α)', toScreenX(0.035), toScreenY((state.Tmin + state.TmA) / 2), '#bef264', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)');
+        drawPhaseBadge('Solid (β)', toScreenX(0.965), toScreenY((state.Tmin + state.TmB) / 2), '#bef264', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)');
+
+        // Sub-eutectic solid two-phase fields placed at vertical midpoints
+        drawTwoPhaseBadge('α', '#bef264', cForm, '#f0abfc', toScreenX(state.compX / 2), toScreenY((state.Tmin + te1) / 2));
+        drawTwoPhaseBadge(cForm, '#f0abfc', 'β', '#bef264', toScreenX(state.compX + (1 - state.compX) / 2), toScreenY((state.Tmin + te2) / 2));
+
+        // Flanking two-phase fields at true open triangle centroids away from liquidus curves and shelves:
+        const xLComp1 = (xE1 + 2 * state.compX) / 3;
+        const tLComp1 = te1 + (state.TmComp - te1) / 3;
+        drawTwoPhaseBadge('L', '#60a5fa', cForm, '#f0abfc', toScreenX(xLComp1), toScreenY(tLComp1));
+
+        const xLComp2 = (2 * state.compX + xE2) / 3;
+        const tLComp2 = te2 + (state.TmComp - te2) / 3;
+        drawTwoPhaseBadge(cForm, '#f0abfc', 'L', '#60a5fa', toScreenX(xLComp2), toScreenY(tLComp2));
+
+        const xLB = (xE2 + 2 * span2[1]) / 3;
+        const tLB = te2 + (state.TmB - te2) / 3;
+        drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(xLB), toScreenY(tLB));
+
+        const wE1Px = toScreenX(xE1) - toScreenX(span1[0]);
+        if (wE1Px >= 80) {
+          const xLA = (span1[0] + 2 * xE1) / 3;
+          const tLA = te1 + (state.TmA - te1) / 3;
+          drawTwoPhaseBadge('L', '#60a5fa', 'α', '#bef264', toScreenX(xLA), toScreenY(tLA));
+        } else if (wE1Px >= 6) {
+          // Narrow sliver callout: badge comfortably above TmA on the Pure A side with subtle pointer into the sliver
+          const targetX = toScreenX((span1[0] + xE1) / 2);
+          const targetY = toScreenY(te1 + (state.TmA - te1) / 2);
+          const badgeX = Math.max(pad.left + 26, toScreenX(Math.max(0.045, xE1 * 0.6)));
+          const badgeY = Math.max(pad.top + 24, toScreenY(state.TmA) - 30);
+          ctxTX.save();
+          ctxTX.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+          ctxTX.lineWidth = 1;
+          ctxTX.beginPath();
+          ctxTX.moveTo(badgeX, badgeY + 10);
+          ctxTX.lineTo(targetX, targetY);
+          ctxTX.stroke();
+          ctxTX.restore();
+          drawTwoPhaseBadge('L', '#60a5fa', 'α', '#bef264', badgeX, badgeY, 'bold 11px ui-sans-serif, system-ui');
+        }
+      } else if (state.preset === 'peritectic') {
         const inv = (cachedInvariants && cachedInvariants.peritectic) ? cachedInvariants.peritectic : findPeritecticInvariant();
         const tp = inv ? inv.T : getPeritecticTemp();
         const span = (inv && inv.span) ? inv.span : [0.70, 0.94];
@@ -2360,18 +2438,20 @@
         ctxTX.lineTo(toScreenX(span[1]), syP);
         ctxTX.stroke();
 
-        const tMidL_Beta = Math.min(state.Tmax - 40, (tp + state.TmB) / 2);
-        const tMidL_Alpha = (state.TmA + tp) / 2;
-        const tMidAlphaBeta = (state.Tmin + tp) / 2;
-        const tMidAlpha = (state.Tmin + state.TmA) / 2;
-        const tMidBeta = (tp + state.TmB) / 2;
+        // Phase field badges positioned safely away from boundary curves:
+        drawPhaseBadge('Liquid (L)', toScreenX(0.30), pad.top + 22, '#60a5fa', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
+        drawPhaseBadge('Solid (α)', toScreenX(0.25), toScreenY((state.Tmin + state.TmA) / 2), '#22c55e', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(34, 197, 94, 0.4)');
+        drawPhaseBadge('Solid (β)', toScreenX(0.965), toScreenY((state.Tmin + state.TmB) / 2), '#bef264', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
 
-        drawPhaseBadge('Liquid (L)', toScreenX(0.28), pad.top + 22, '#60a5fa', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
-        drawPhaseBadge('Solid (α)', toScreenX(0.05), toScreenY(tMidAlpha), '#22c55e', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(34, 197, 94, 0.4)');
-        drawPhaseBadge('Solid (β)', toScreenX(0.94), toScreenY(tMidBeta), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
-        drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(0.65), toScreenY(tMidL_Beta));
-        drawTwoPhaseBadge('L', '#60a5fa', 'α', '#22c55e', toScreenX(0.12), toScreenY(tMidL_Alpha));
-        drawTwoPhaseBadge('α', '#22c55e', 'β', '#bef264', toScreenX(0.50), toScreenY(tMidAlphaBeta));
+        // (L + β) above Tp in the high-temp two-phase funnel (centroid away from curves)
+        drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(0.88), toScreenY(tp + (state.TmB - tp) * 0.45));
+
+        // (L + α) ascending lens below Tp
+        drawTwoPhaseBadge('L', '#60a5fa', 'α', '#22c55e', toScreenX(0.40), toScreenY((state.TmA + tp) / 2));
+
+        // (α + β) sub-peritectic two-phase field
+        const xAlphaBeta = (span[0] + span[1]) / 2;
+        drawTwoPhaseBadge('α', '#22c55e', 'β', '#bef264', toScreenX(xAlphaBeta), toScreenY((state.Tmin + tp) / 2));
       } else if (state.preset === 'eutectic' || state.preset === 'eutectic_2') {
         const inv = (cachedInvariants && cachedInvariants.eutectic) ? cachedInvariants.eutectic : scanInvariantPoint(getEutecticTemp());
         const te = inv ? inv.T : getEutecticTemp();
@@ -2386,78 +2466,34 @@
         ctxTX.lineTo(toScreenX(span[1]), syE);
         ctxTX.stroke();
 
-        const tMidLA = (state.TmA + te) / 2;
-        const tMidLB = (state.TmB + te) / 2;
-        const tMidAlphaBeta = (state.Tmin + te) / 2;
-        const tMidAlpha = (state.Tmin + state.TmA) / 2;
-        const tMidBeta = (state.Tmin + state.TmB) / 2;
-
         const isDual = state.preset === 'eutectic_2';
-        const xPosLA = isDual ? 0.20 : 0.16;
-        const xPosLB = isDual ? 0.82 : 0.78;
+        const pA = isDual ? 'α' : 'α₁';
+        const pB = isDual ? 'β' : 'α₂';
+        const cA = isDual ? '#22c55e' : '#bef264';
+        const cB = '#bef264';
 
-        drawPhaseBadge('Liquid (L)', pad.left + (w - pad.left - pad.right) / 2, pad.top + 22, '#60a5fa', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
+        drawPhaseBadge('Liquid (L)', pad.left + (w - pad.left - pad.right) / 2, pad.top + 22, '#60a5fa', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
+        drawPhaseBadge(`Solid (${pA})`, toScreenX(0.04), toScreenY((state.Tmin + state.TmA) / 2), cA, 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)');
+        drawPhaseBadge(`Solid (${pB})`, toScreenX(0.96), toScreenY((state.Tmin + state.TmB) / 2), cB, 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)');
 
-        if (isDual) {
-          // Eutectic 2 Lattices: distinct alpha (Hunter Forest #22c55e) and beta (Vivid Lime #bef264)
-          drawPhaseBadge('Solid (α)', toScreenX(0.05), toScreenY(tMidAlpha), '#22c55e', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(34, 197, 94, 0.4)');
-          drawPhaseBadge('Solid (β)', toScreenX(0.95), toScreenY(tMidBeta), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
-          drawTwoPhaseBadge('L', '#60a5fa', 'α', '#22c55e', toScreenX(xPosLA), toScreenY(tMidLA));
-          drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(xPosLB), toScreenY(tMidLB));
-          drawTwoPhaseBadge('α', '#22c55e', 'β', '#bef264', pad.left + (w - pad.left - pad.right) / 2, toScreenY(tMidAlphaBeta));
-        } else {
-          // Eutectic 1 Lattice (Single parent structure, miscibility gap): alpha_1 and alpha_2 both in Lime (#bef264)
-          drawPhaseBadge('Solid (α₁)', toScreenX(0.05), toScreenY(tMidAlpha), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
-          drawPhaseBadge('Solid (α₂)', toScreenX(0.95), toScreenY(tMidBeta), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
-          drawTwoPhaseBadge('L', '#60a5fa', 'α₁', '#bef264', toScreenX(xPosLA), toScreenY(tMidLA));
-          drawTwoPhaseBadge('L', '#60a5fa', 'α₂', '#bef264', toScreenX(xPosLB), toScreenY(tMidLB));
-          drawTwoPhaseBadge('α₁', '#bef264', 'α₂', '#bef264', pad.left + (w - pad.left - pad.right) / 2, toScreenY(tMidAlphaBeta));
-        }
-      } else if (state.hasCompound) {
-        const te1 = (cachedInvariants && cachedInvariants.e1) ? cachedInvariants.e1.T : getCompoundEutectics().te1;
-        const te2 = (cachedInvariants && cachedInvariants.e2) ? cachedInvariants.e2.T : getCompoundEutectics().te2;
-        const syE1 = toScreenY(te1);
-        const syE2 = toScreenY(te2);
+        // Sub-eutectic two-phase field
+        drawTwoPhaseBadge(pA, cA, pB, cB, pad.left + (w - pad.left - pad.right) / 2, toScreenY((state.Tmin + te) / 2));
 
-        const tMidLA = (state.TmA + te1) / 2;
-        const tMidLComp1 = (state.TmComp + te1) / 2;
-        const tMidLComp2 = (state.TmComp + te2) / 2;
-        const tMidLB = (state.TmB + te2) / 2;
+        // Two-phase fields above shelf placed at true triangle centroids away from curves:
+        const xLA = (2 * span[0] + inv.x) / 3;
+        const tLA = te + (state.TmA - te) / 3;
+        drawTwoPhaseBadge('L', '#60a5fa', pA, cA, toScreenX(xLA), toScreenY(tLA));
 
-        drawPhaseBadge('Liquid (L)', pad.left + (w - pad.left - pad.right) / 2, pad.top + 20, '#60a5fa', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
-        drawPhaseBadge('Solid (α)', toScreenX(0.04), toScreenY((state.Tmin + state.TmA) / 2), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
-        drawPhaseBadge('Solid (β)', toScreenX(0.96), toScreenY((state.Tmin + state.TmB) / 2), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
-
-        const cx = state.compX || 0.5;
-        const stoich = getCompoundInfo();
-        const cForm = stoich.formula;
-
-        // Dynamic midpoint coordinates for left and right subsystems
-        const xMidLeft = cx / 2;
-        const xMidRight = cx + (1 - cx) / 2;
-
-        const xE1 = (cachedInvariants && cachedInvariants.e1) ? cachedInvariants.e1.x : cx * 0.25;
-        const xE2 = (cachedInvariants && cachedInvariants.e2) ? cachedInvariants.e2.x : cx + (1 - cx) * 0.75;
-
-        const xLA = Math.max(0.06, xE1 * 0.5);
-        const xLComp1 = (xE1 + cx) / 2;
-        const xLComp2 = (cx + xE2) / 2;
-        const xLB = Math.min(0.94, xE2 + (1 - xE2) * 0.5);
-
-        drawTwoPhaseBadge('L', '#60a5fa', 'α', '#bef264', toScreenX(xLA), toScreenY(tMidLA));
-        drawTwoPhaseBadge('L', '#60a5fa', cForm, '#f0abfc', toScreenX(xLComp1), toScreenY(tMidLComp1));
-        drawTwoPhaseBadge(cForm, '#f0abfc', 'L', '#60a5fa', toScreenX(xLComp2), toScreenY(tMidLComp2));
-        drawTwoPhaseBadge('L', '#60a5fa', 'β', '#bef264', toScreenX(xLB), toScreenY(tMidLB));
-
-        // Sub-eutectic solid two-phase fields placed at true vertical midpoints
-        drawTwoPhaseBadge('α', '#bef264', cForm, '#f0abfc', toScreenX(xMidLeft), toScreenY((state.Tmin + te1) / 2));
-        drawTwoPhaseBadge(cForm, '#f0abfc', 'β', '#bef264', toScreenX(xMidRight), toScreenY((state.Tmin + te2) / 2));
-      } else {
+        const xLB = (inv.x + 2 * span[1]) / 3;
+        const tLB = te + (state.TmB - te) / 3;
+        drawTwoPhaseBadge('L', '#60a5fa', pB, cB, toScreenX(xLB), toScreenY(tLB));
+      } else if (state.preset === 'isomorphous') {
+        // Isomorphous
+        drawPhaseBadge('Liquid (L)', toScreenX(0.35), pad.top + 22, '#60a5fa', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
         const tMidLens = (state.TmA + state.TmB) / 2;
-        const tMidSolid = (state.Tmin + state.TmA) / 2;
-        drawPhaseBadge('Liquid (L)', pad.left + (w - pad.left - pad.right) / 2, pad.top + 22, '#60a5fa', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(59, 130, 246, 0.4)');
-        drawTwoPhaseBadge('L', '#60a5fa', 'Solid', '#bef264', pad.left + (w - pad.left - pad.right) / 2, toScreenY(tMidLens));
-        drawPhaseBadge('Solid Solution (S)', pad.left + (w - pad.left - pad.right) / 2, toScreenY(tMidSolid), '#bef264', 'bold 12px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
+        drawTwoPhaseBadge('L', '#60a5fa', 'Solid', '#bef264', toScreenX(0.50), toScreenY(tMidLens));
+        const tMidSolid = (state.Tmin + Math.min(state.TmA, state.TmB)) / 2;
+        drawPhaseBadge('Solid Solution (S)', toScreenX(0.50), toScreenY(tMidSolid), '#bef264', 'bold 11px ui-sans-serif, system-ui', 'rgba(15, 23, 42, 0.9)', 'rgba(190, 242, 100, 0.4)');
       }
 
       // 3. Draw Active Temperature Horizontal Tie-Line
@@ -2577,18 +2613,37 @@
       const isPureComp_TmTX = state.hasCompound && (Math.abs(state.selectedX - state.compX) <= 0.015) && Math.abs(state.T - (state.TmComp || 1550)) <= 5;
 
       if (isAtInvariantPointTX) {
-        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Invariant Point (<i>x</i> = ${invariantPointXTX.toFixed(2)})</span>`;
-        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">3 Coexisting Phases (<i>F</i> = 0)</span>`;
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-amber-300 font-semibold">Invariant Shelf (<i>x</i> = ${invariantPointXTX.toFixed(2)})</span>`;
+        const cForm = getCompoundInfo().formula;
+        let p1Name = 'α', p1Color = 'text-emerald-400';
+        let p2Name = 'β', p2Color = 'text-lime-400';
+        if (state.preset === 'eutectic') {
+          p1Name = 'α₁'; p1Color = 'text-lime-400';
+          p2Name = 'α₂'; p2Color = 'text-lime-400';
+        } else if (state.preset === 'eutectic_2' || state.preset === 'peritectic') {
+          p1Name = 'α'; p1Color = 'text-emerald-400';
+          p2Name = 'β'; p2Color = 'text-lime-400';
+        } else if (state.hasCompound) {
+          if (invariantPointXTX < state.compX) {
+            p1Name = 'α'; p1Color = 'text-lime-400';
+            p2Name = cForm; p2Color = 'text-fuchsia-400';
+          } else {
+            p1Name = cForm; p1Color = 'text-fuchsia-400';
+            p2Name = 'β'; p2Color = 'text-lime-400';
+          }
+        }
+        document.getElementById('readout-lever').innerHTML = `<span class="text-blue-400 font-semibold">L</span> + <span class="${p1Color} font-semibold">${p1Name}</span> + <span class="${p2Color} font-semibold">${p2Name}</span> &nbsp;<span class="text-amber-400 font-semibold">(<i>F</i> = 0)</span>`;
       } else if (isPureA_TmTX) {
-        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Pure Component A (<i>T</i><sub>m,A</sub> = ${state.TmA} K)</span>`;
-        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid Coexistence (<i>F</i> = 0)</span>`;
+        const sColor = (state.preset === 'eutectic_2' || state.preset === 'peritectic') ? 'text-emerald-400' : 'text-lime-400';
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-slate-200 font-semibold">Pure Component A (<i>T</i><sub>m,A</sub> = ${state.TmA} K)</span>`;
+        document.getElementById('readout-lever').innerHTML = `<span class="text-blue-400 font-semibold">L</span> ⇄ <span class="${sColor} font-semibold">Solid A</span> &nbsp;<span class="text-amber-400 font-semibold">(<i>F</i> = 0)</span>`;
       } else if (isPureB_TmTX) {
-        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Pure Component B (<i>T</i><sub>m,B</sub> = ${state.TmB} K)</span>`;
-        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Solid Coexistence (<i>F</i> = 0)</span>`;
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-slate-200 font-semibold">Pure Component B (<i>T</i><sub>m,B</sub> = ${state.TmB} K)</span>`;
+        document.getElementById('readout-lever').innerHTML = `<span class="text-blue-400 font-semibold">L</span> ⇄ <span class="text-lime-400 font-semibold">Solid B</span> &nbsp;<span class="text-amber-400 font-semibold">(<i>F</i> = 0)</span>`;
       } else if (isPureComp_TmTX) {
         const cForm = getCompoundInfo().formula;
-        document.getElementById('readout-tieline').innerHTML = `<span class="text-rose-400 font-semibold">Congruent Compound ${cForm} (<i>x</i> = ${state.compX.toFixed(2)})</span>`;
-        document.getElementById('readout-lever').innerHTML = `<span class="text-rose-400 font-semibold">Liquid ⇄ Compound (${cForm}) Equilibrium (<i>F</i> = 1)</span>`;
+        document.getElementById('readout-tieline').innerHTML = `<span class="text-fuchsia-400 font-semibold">Congruent Compound ${cForm} (<i>x</i> = ${state.compX.toFixed(2)})</span>`;
+        document.getElementById('readout-lever').innerHTML = `<span class="text-blue-400 font-semibold">L</span> ⇄ <span class="text-fuchsia-400 font-semibold">${cForm}</span> &nbsp;<span class="text-amber-400 font-semibold">(<i>F</i> = 1)</span>`;
       } else if (activeTieLine) {
         const c1 = activeTieLine.x1;
         const c2 = activeTieLine.x2;
