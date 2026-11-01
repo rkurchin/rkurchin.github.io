@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MSE 27-676: Continuum Transport Interactive Workbench</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Avenir Next", "Avenir", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    input[type=range] {
+      accent-color: #C41230;
+    }
+  </style>
+</head>
+<body class="bg-[var(--background,#f8fafc)] text-[var(--foreground,#0f172a)] antialiased p-3 md:p-5">
+
+  <div class="max-w-6xl mx-auto space-y-4">
+
+    <!-- Header Banner -->
+    <header class="bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#C41230]"></span>
+          <span class="text-[11px] font-bold tracking-wider uppercase text-[#C41230]">MSE 27-676 ∙ Foundations of Materials Science</span>
+        </div>
+        <h1 class="text-xl font-bold tracking-tight text-[var(--foreground,#0f172a)]">
+          Continuum Diffusion Interactive Workbench
+        </h1>
+        <p class="text-xs text-[var(--muted-foreground,#64748b)]">
+          Interactive physics models for Lecture 15: Laplacian curvature, Gaussian pulse, error function carburization, and Scheil coring.
+        </p>
+      </div>
+
+      <!-- Tab Selectors -->
+      <nav class="flex flex-wrap gap-1 bg-[var(--muted,#f1f5f9)] p-1 rounded-lg border border-[var(--border,#e2e8f0)]" id="tabNav">
+        <button onclick="switchTab(1)" id="tabBtn1" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all bg-[#C41230] text-white shadow-sm">
+          1. Curvature Engine
+        </button>
+        <button onclick="switchTab(2)" id="tabBtn2" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
+          2. Gaussian Source
+        </button>
+        <button onclick="switchTab(3)" id="tabBtn3" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
+          3. Carburization (erf)
+        </button>
+        <button onclick="switchTab(4)" id="tabBtn4" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
+          4. Phase Diagram & Coring
+        </button>
+      </nav>
+    </header>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: CURVATURE SMOOTHING ENGINE -->
+    <!-- ========================================================================= -->
+    <div id="tabContent1" class="tab-content block">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-1 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm space-y-3.5">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#C41230]">Design 1 Controls</h3>
+            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Laplacian Curvature Intuition</p>
+          </div>
+
+          <!-- Play / Reset -->
+          <div class="flex items-center gap-2">
+            <button id="t1PlayBtn" onclick="togglePlay(1)" class="flex-1 py-1.5 px-3 bg-[#C41230] hover:bg-[#a00f27] text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
+              <span id="t1PlayIcon">⏸ Pause</span>
+            </button>
+            <button onclick="resetSim(1)" class="py-1.5 px-3 bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#e2e8f0)] text-[var(--foreground,#0f172a)] rounded-lg text-xs font-semibold transition border border-[var(--border,#cbd5e1)]">
+              ↺ Reset
+            </button>
+          </div>
+
+          <!-- Absolute Time Readout -->
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] flex items-center justify-between text-xs">
+            <span class="font-semibold text-[var(--foreground,#0f172a)]">Absolute Time (t):</span>
+            <span id="t1TimeLabel" class="font-mono text-[#C41230] font-bold">0.020 s</span>
+          </div>
+
+          <!-- Diffusivity Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Diffusivity (D)</span>
+              <span id="t1DLabel" class="font-mono text-[#2563EB]">1.0 m²/s</span>
+            </div>
+            <input type="range" id="t1DSlider" min="0.2" max="2.5" step="0.1" value="1.0" class="w-full cursor-pointer" oninput="updateD(1, this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>Slow Smoothing (0.2)</span>
+              <span>Fast Smoothing (2.5)</span>
+            </div>
+          </div>
+
+          <!-- Waveform Select -->
+          <div class="space-y-1">
+            <label class="block text-xs font-semibold">Initial Profile Waveform</label>
+            <select id="t1WaveSelect" onchange="changeWave(this.value)" class="w-full text-xs p-1.5 rounded-lg bg-[var(--card,#ffffff)] border border-[var(--border,#cbd5e1)] text-[var(--foreground,#0f172a)] focus:outline-none focus:ring-1 focus:ring-[#C41230]">
+              <option value="multi">Fundamental + 3rd Harmonic</option>
+              <option value="square">Smoothed Top-Hat / Square</option>
+              <option value="asym">Asymmetric Double Peak</option>
+            </select>
+          </div>
+
+          <!-- Color Legend -->
+          <div class="pt-2 border-t border-[var(--border,#e2e8f0)] space-y-1.5 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#C41230]"></span>
+              <span class="font-semibold text-[#C41230]">∂²C/∂x² &lt; 0 ⟹ Peak Erodes (↓)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#2563EB]"></span>
+              <span class="font-semibold text-[#2563EB]">∂²C/∂x² &gt; 0 ⟹ Valley Fills (↑)</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#D97706]"></span>
+              <span class="font-semibold text-[#D97706]">∂²C/∂x² = 0 ⟹ Stationary Node (⊙)</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] text-[11px] text-[var(--muted-foreground,#475569)] leading-relaxed">
+            <strong class="text-[var(--foreground,#0f172a)]">Physical Principle:</strong> High frequencies dampen at rate <span class="font-mono text-[#C41230]">exp(-k² D t)</span>. Tripling wave frequency erodes ripples <strong>9× faster</strong>!
+          </div>
+        </div>
+
+        <!-- Canvas Column -->
+        <div class="lg:col-span-3 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#e2e8f0)]">
+            <div>
+              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">The Curvature Smoothing Engine</h2>
+              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Local accumulation rate is strictly proportional to geometric spatial curvature.</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-0.5 bg-[var(--muted,#f1f5f9)] rounded border border-[var(--border,#e2e8f0)]">
+              Harmonic Damping: <strong id="t1HarmonicRatio" class="text-[#C41230]">1.00</strong>
+            </span>
+          </div>
+
+          <!-- Fixed-height canvas stack (never expands vertically) -->
+          <div class="py-2 flex flex-col gap-2">
+            <div class="relative w-full" style="height: 220px;">
+              <canvas id="t1CanvasC" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+            <div class="relative w-full" style="height: 120px;">
+              <canvas id="t1CanvasCurv" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-[var(--muted-foreground,#64748b)] flex justify-between items-center pt-2 border-t border-[var(--border,#e2e8f0)]">
+            <span>Inflection points (gold dots ⊙) experience zero accumulation despite active flux.</span>
+            <span class="font-semibold text-[var(--foreground,#0f172a)]">Governing PDE: ∂C/∂t = D (∂²C/∂x²)</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: GAUSSIAN SOURCE (CANONICAL CASE A) -->
+    <!-- ========================================================================= -->
+    <div id="tabContent2" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-1 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm space-y-3.5">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#C41230]">Design 2 Controls</h3>
+            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Instantaneous Planar Source (Gaussian)</p>
+          </div>
+
+          <!-- Play / Reset -->
+          <div class="flex items-center gap-2">
+            <button id="t2PlayBtn" onclick="togglePlay(2)" class="flex-1 py-1.5 px-3 bg-[#C41230] hover:bg-[#a00f27] text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
+              <span id="t2PlayIcon">⏸ Pause</span>
+            </button>
+            <button onclick="resetSim(2)" class="py-1.5 px-3 bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#e2e8f0)] text-[var(--foreground,#0f172a)] rounded-lg text-xs font-semibold transition border border-[var(--border,#cbd5e1)]">
+              ↺ Reset
+            </button>
+          </div>
+
+          <!-- Time Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Elapsed Time (t)</span>
+              <span id="t2TimeLabel" class="font-mono text-[#C41230]">0.25 s</span>
+            </div>
+            <input type="range" id="t2TimeSlider" min="0.08" max="2.5" step="0.01" value="0.25" class="w-full cursor-pointer" oninput="onTimeInput(2, this.value)">
+          </div>
+
+          <!-- Total Mass M0 -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Total Mass (M<sub>0</sub>)</span>
+              <span id="t2MLabel" class="font-mono">2.0 mol/m²</span>
+            </div>
+            <input type="range" id="t2MSlider" min="1.0" max="4.0" step="0.2" value="2.0" class="w-full cursor-pointer" oninput="updateM(2, this.value)">
+          </div>
+
+          <!-- Diffusivity D -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Diffusivity (D)</span>
+              <span id="t2DLabel" class="font-mono">0.5 mm²/s</span>
+            </div>
+            <input type="range" id="t2DSlider" min="0.1" max="1.5" step="0.05" value="0.5" class="w-full cursor-pointer" oninput="updateD(2, this.value)">
+          </div>
+
+          <!-- Metrics Badge -->
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] space-y-1.5 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Conserved Solute (M<sub>0</sub> = ∫ C dx):</span>
+              <span id="t2AreaReadout" class="font-mono font-bold text-[#D97706]">2.00 mol/m² ✓</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Peak Height (C<sub>max</sub>):</span>
+              <span id="t2PeakReadout" class="font-mono font-bold text-[#C41230]">1.60</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Width (σ = √(2Dt)):</span>
+              <span id="t2SigmaReadout" class="font-mono font-bold text-[#2563EB]">0.50 mm</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] text-[11px] text-[var(--muted-foreground,#475569)] leading-relaxed">
+            <strong class="text-[var(--foreground,#0f172a)]">Mass Conservation:</strong> The gold shaded area under the curve is strictly invariant (M<sub>0</sub> = &int; C dx). As the peak C<sub>max</sub> drops by <span class="font-mono text-[#C41230]">1/√t</span>, width broadens by <span class="font-mono text-[#2563EB]">√(Dt)</span>.
+          </div>
+        </div>
+
+        <!-- Canvas Column -->
+        <div class="lg:col-span-3 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#e2e8f0)]">
+            <div>
+              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">Gaussian Pulse Broadening & 2D Diffusion Couple</h2>
+              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Top: 1D Concentration Profile C(x,t) • Bottom: Physical 2D Diffusion Couple</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-0.5 bg-[var(--muted,#f1f5f9)] rounded border border-[var(--border,#e2e8f0)]">
+              C(x,t) = [M<sub>0</sub> / 2√(πDt)] exp(-x² / 4Dt)
+            </span>
+          </div>
+
+          <!-- Fixed-height canvas stack -->
+          <div class="py-2 flex flex-col gap-2">
+            <div class="relative w-full" style="height: 220px;">
+              <canvas id="t2Canvas1D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+            <div class="relative w-full" style="height: 95px;">
+              <canvas id="t2Canvas2D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-[var(--muted-foreground,#64748b)] flex justify-between items-center pt-2 border-t border-[var(--border,#e2e8f0)]">
+            <span>Initial thin planar tracer deposit at x = 0 spreads symmetrically into an infinite medium.</span>
+            <span class="font-semibold text-[var(--foreground,#0f172a)]">Tracer Diffusion in Infinite Medium</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: CARBURIZATION (CANONICAL CASE B) -->
+    <!-- ========================================================================= -->
+    <div id="tabContent3" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-1 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm space-y-3.5">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#C41230]">Design 3 Controls</h3>
+            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Pinned Surface: Error Function & Part Carburization</p>
+          </div>
+
+          <!-- Play / Reset -->
+          <div class="flex items-center gap-2">
+            <button id="t3PlayBtn" onclick="togglePlay(3)" class="flex-1 py-1.5 px-3 bg-[#C41230] hover:bg-[#a00f27] text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
+              <span id="t3PlayIcon">⏸ Pause</span>
+            </button>
+            <button onclick="resetSim(3)" class="py-1.5 px-3 bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#e2e8f0)] text-[var(--foreground,#0f172a)] rounded-lg text-xs font-semibold transition border border-[var(--border,#cbd5e1)]">
+              ↺ Reset
+            </button>
+          </div>
+
+          <!-- Time Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Furnace Time (t)</span>
+              <span id="t3TimeLabel" class="font-mono text-[#C41230]">0.25 hr</span>
+            </div>
+            <input type="range" id="t3TimeSlider" min="0.05" max="3.0" step="0.02" value="0.25" class="w-full cursor-pointer" oninput="onTimeInput(3, this.value)">
+          </div>
+
+          <!-- Surface Cs -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Surface Gas Potential (Cs)</span>
+              <span id="t3CsLabel" class="font-mono text-[#C41230]">1.00 wt% C</span>
+            </div>
+            <input type="range" id="t3CsSlider" min="0.7" max="1.4" step="0.05" value="1.0" class="w-full cursor-pointer" oninput="updateCs(this.value)">
+          </div>
+
+          <!-- Core C0 -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Core Steel Carbon (C0)</span>
+              <span id="t3C0Label" class="font-mono">0.20 wt% C</span>
+            </div>
+            <input type="range" id="t3C0Slider" min="0.05" max="0.4" step="0.05" value="0.2" class="w-full cursor-pointer" oninput="updateC0(this.value)">
+          </div>
+
+          <!-- Variable Definitions -->
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] space-y-1.5 text-xs text-[var(--muted-foreground,#475569)]">
+            <div class="font-bold text-[var(--foreground,#0f172a)] text-[11px] uppercase tracking-wider mb-1">Variable Definitions:</div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-mono font-bold text-[#C41230]">C<sub>s</sub>:</span>
+              <span class="text-[11px]">Surface carbon potential pinned by furnace gas</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-mono font-bold text-[#475569]">C₀:</span>
+              <span class="text-[11px]">Initial uniform steel core carbon content</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-mono font-bold text-[#0f172a]">D:</span>
+              <span class="text-[11px]">Diffusivity of carbon in austenite (0.25 mm²/h)</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-mono font-bold text-[#0f172a]">t:</span>
+              <span class="text-[11px]">Furnace carburizing time (hours)</span>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <span class="font-mono font-bold text-[#2563EB]">x<sub>pen</sub>:</span>
+              <span class="text-[11px]">Kinetic penetration depth &approx; 2&radic;(Dt)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Column -->
+        <div class="lg:col-span-3 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#e2e8f0)]">
+            <div>
+              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">Error Function Profile & Case Hardened Part Cross-Section</h2>
+              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Left: 1D Depth Profile • Right: Part Cross-Section with Case Depth x<sub>pen</sub></p>
+            </div>
+            <span class="text-xs font-mono px-2 py-0.5 bg-[var(--muted,#f1f5f9)] rounded border border-[var(--border,#e2e8f0)]">
+              Case Depth x<sub>pen</sub>: <strong id="t3PenReadout" class="text-[#C41230]">0.50 mm</strong>
+            </span>
+          </div>
+
+          <!-- Split Canvases with fixed heights -->
+          <div class="py-2 grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div class="md:col-span-3 relative w-full" style="height: 310px;">
+              <canvas id="t3Canvas1D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+            <div class="md:col-span-2 relative w-full" style="height: 310px;">
+              <canvas id="t3CanvasGear" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-[var(--muted-foreground,#64748b)] flex justify-between items-center pt-2 border-t border-[var(--border,#e2e8f0)]">
+            <span>Dotted curves show historical profiles at t = 0.25 hr and t = 1.00 hr.</span>
+            <span class="font-semibold text-[var(--foreground,#0f172a)]">Gas Carburization (Semi-Infinite Domain)</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: SOLIDIFICATION & CORING (PHASE DIAGRAM & 2D GRAIN) -->
+    <!-- ========================================================================= -->
+    <div id="tabContent4" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-1 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm space-y-3.5">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#C41230]">Design 4 Controls</h3>
+            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Phase Diagram Tie-Line & Coring Gradient</p>
+          </div>
+
+          <!-- Play / Reset -->
+          <div class="flex items-center gap-2">
+            <button id="t4PlayBtn" onclick="togglePlay(4)" class="flex-1 py-1.5 px-3 bg-[#C41230] hover:bg-[#a00f27] text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
+              <span id="t4PlayIcon">⏸ Pause</span>
+            </button>
+            <button onclick="resetSim(4)" class="py-1.5 px-3 bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#e2e8f0)] text-[var(--foreground,#0f172a)] rounded-lg text-xs font-semibold transition border border-[var(--border,#cbd5e1)]">
+              ↺ Reset
+            </button>
+          </div>
+
+          <!-- Solid Fraction Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Solidified Fraction (f<sub>S</sub>)</span>
+              <span id="t4FsLabel" class="font-mono text-[#C41230]">35%</span>
+            </div>
+            <input type="range" id="t4FsSlider" min="0.05" max="0.90" step="0.01" value="0.35" class="w-full cursor-pointer" oninput="onTimeInput(4, this.value)">
+          </div>
+
+          <!-- Nominal Alloy Composition C0 Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Alloy Composition (C₀)</span>
+              <span id="t4C0Label" class="font-mono text-[#2563EB]">10 wt% B</span>
+            </div>
+            <input type="range" id="t4C0Slider" min="5" max="25" step="1" value="10" class="w-full cursor-pointer" oninput="updateT4C0(this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>5 wt% B (Dilute)</span>
+              <span>25 wt% B (Concentrated)</span>
+            </div>
+          </div>
+
+          <!-- Partition k -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Partition Coeff (k = C<sub>S</sub> / C<sub>L</sub>)</span>
+              <span id="t4KLabel" class="font-mono">0.40</span>
+            </div>
+            <input type="range" id="t4KSlider" min="0.2" max="0.75" step="0.05" value="0.40" class="w-full cursor-pointer" oninput="updateK(this.value)">
+          </div>
+
+          <!-- Cooling Rate Tdot -->
+          <div class="space-y-1">
+            <div class="flex justify-between items-center text-xs font-semibold">
+              <span>Cooling Rate (Ṫ = dT/dt)</span>
+              <span id="t4TdotVal" class="font-mono font-bold text-[#D97706]">6.3 K/s</span>
+            </div>
+            <div id="t4TdotMode" class="text-[11px] font-semibold text-[#D97706]">Fast Cool: Scheil Coring (D<sub>S</sub> ≈ 0)</div>
+            <input type="range" id="t4TdotSlider" min="0" max="100" step="1" value="70" class="w-full cursor-pointer" oninput="updateTdot(this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>0.05 K/s (No Gradient)</span>
+              <span>50 K/s (Steep Coring)</span>
+            </div>
+          </div>
+
+          <!-- Metrics Badge -->
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] space-y-1 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Solidification Regime:</span>
+              <span id="t4RegimeReadout" class="font-mono font-bold text-[#DC2626]">Scheil Coring (Steep)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Solid Interface C<sub>S</sub>*:</span>
+              <span id="t4CsStarReadout" class="font-mono font-bold text-[#15803D]">4.0 wt%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Liquid Interface C<sub>L</sub>*:</span>
+              <span id="t4ClStarReadout" class="font-mono font-bold text-[#2563EB]">10.0 wt%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Average Solid C̄<sub>S</sub>:</span>
+              <span id="t4CsBarReadout" class="font-mono font-bold text-[#D97706]">4.0 wt%</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Solid Back-Diffusion:</span>
+              <span id="t4DiffusionReadout" class="font-mono font-bold text-[#64748b]">Frozen (D<sub>S</sub> ≈ 0)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Column -->
+        <div class="lg:col-span-3 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#e2e8f0)]">
+            <div>
+              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">Solidification &amp; Coring: Phase Diagram, Concentration Profile &amp; 2D Grain</h2>
+              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Top: Phase Diagram &amp; Tie-Line • Bottom: 1D Radial Concentration Profile • Right: 2D Grain Solidification</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-0.5 bg-[var(--muted,#f1f5f9)] rounded border border-[var(--border,#e2e8f0)]">
+              Partition Ratio k = C<sub>S</sub> / C<sub>L</sub> = 0.40
+            </span>
+          </div>
+
+          <!-- Split Canvases: Left = Phase Diagram + 1D Concentration Profile; Right = 2D Grain -->
+          <div class="py-2 grid grid-cols-1 md:grid-cols-5 gap-3">
+            <div class="md:col-span-3 flex flex-col gap-2.5">
+              <div class="relative w-full" style="height: 195px;">
+                <canvas id="t4CanvasPhase" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+              </div>
+              <div class="relative w-full" style="height: 190px;">
+                <canvas id="t4Canvas1D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+              </div>
+            </div>
+            <div class="md:col-span-2 relative w-full" style="height: 395px;">
+              <canvas id="t4Canvas2D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+          </div>
+
+          <!-- Explanatory note moved underneath the plots for horizontal balance & compact vertical profile -->
+          <div class="pt-2 border-t border-[var(--border,#e2e8f0)] text-[11px] text-[var(--muted-foreground,#475569)] leading-relaxed">
+            <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+              <p class="leading-normal">
+                <strong class="text-[var(--foreground,#0f172a)]">Cooling Rate &amp; Coring:</strong> When cooling is slow (&lt; 0.1 K/s), solid back-diffusion D<sub>S</sub> has ample time to homogenize the grain &rarr; <strong>Equilibrium Solidification (Lever Rule, uniform solid)</strong>. As cooling accelerates (&gt; 5 K/s), solid diffusion freezes (D<sub>S</sub> &approx; 0) &rarr; <strong>Scheil Coring (radial gradient from pure core kC₀ to solute-rich rim)</strong>, shifting average solid C̄<sub>S</sub> leftward.
+              </p>
+              <span class="text-[10px] font-semibold text-[var(--foreground,#0f172a)] px-2.5 py-1 bg-white rounded border border-[var(--border,#cbd5e1)] whitespace-nowrap self-start md:self-center shadow-xs">
+                Scheil-Gulliver Model
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Vanilla JavaScript Physics Simulation Engine -->
+  <script>
+    // Tab switching
+    let currentTab = 1;
+    function switchTab(tabId) {
+      currentTab = tabId;
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`tabContent${i}`).classList.toggle('hidden', i !== tabId);
+        document.getElementById(`tabContent${i}`).classList.toggle('block', i === tabId);
+        
+        const btn = document.getElementById(`tabBtn${i}`);
+        if (i === tabId) {
+          btn.className = "tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all bg-[#C41230] text-white shadow-sm";
+        } else {
+          btn.className = "tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]";
+        }
+      }
+    }
+
+    // High DPI Canvas Scaling Helper WITH FIXED HEIGHTS (Fixes vertical growth bug)
+    function setupCanvas(canvas) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      const targetW = Math.floor(rect.width * dpr);
+      const targetH = Math.floor(rect.height * dpr);
+
+      // Only resize buffer if dimensions actually changed
+      if (canvas.width !== targetW || canvas.height !== targetH) {
+        canvas.width = targetW;
+        canvas.height = targetH;
+      }
+      const ctx = canvas.getContext('2d');
+      // Reset transform to identity and wipe entire canvas buffer completely
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Reset line dashes and styles to prevent state leakage across frames
+      ctx.setLineDash([]);
+      ctx.globalAlpha = 1.0;
+      // Re-apply DPR scaling for crisp vector graphics
+      ctx.scale(dpr, dpr);
+      return { ctx, width: rect.width, height: rect.height };
+    }
+
+    // Rotated Y-Axis Label Drawer
+    function drawYAxisLabel(ctx, text, xPos, yCenter) {
+      ctx.save();
+      ctx.translate(xPos, yCenter);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#0f172a";
+      ctx.font = "bold 11px sans-serif";
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+    }
+
+    // Mathematical Subscript Text Drawer on HTML Canvas
+    function drawSub(ctx, base, sub, post, x, y) {
+      ctx.save();
+      ctx.textAlign = "left";
+      ctx.fillText(base, x, y);
+      const wBase = ctx.measureText(base).width;
+      const oldFont = ctx.font;
+      ctx.font = oldFont.replace(/\d+(\.\d+)?px/, (m) => `${Math.round(parseFloat(m) * 0.78)}px`);
+      ctx.fillText(sub, x + wBase, y + 2.5);
+      const wSub = ctx.measureText(sub).width;
+      ctx.font = oldFont;
+      if (post) ctx.fillText(post, x + wBase + wSub, y);
+      ctx.restore();
+    }
+
+    // Mathematical Subscript Text Width Measurer on HTML Canvas
+    function measureSub(ctx, base, sub, post) {
+      ctx.save();
+      const wBase = ctx.measureText(base).width;
+      const oldFont = ctx.font;
+      ctx.font = oldFont.replace(/\d+(\.\d+)?px/, (m) => `${Math.round(parseFloat(m) * 0.78)}px`);
+      const wSub = ctx.measureText(sub).width;
+      ctx.font = oldFont;
+      const wPost = post ? ctx.measureText(post).width : 0;
+      ctx.restore();
+      return wBase + wSub + wPost;
+    }
+
+    // Mathematical Error Function (Abramowitz & Stegun 7.1.26 approximation, error < 1.5e-7)
+    function mathErf(x) {
+      const sign = x >= 0 ? 1 : -1;
+      x = Math.abs(x);
+      const a1 =  0.254829592, a2 = -0.284496736, a3 =  1.421413741, a4 = -1.453152027, a5 =  1.061405429, p = 0.3275911;
+      const t = 1.0 / (1.0 + p * x);
+      const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+      return sign * y;
+    }
+
+    // Simulation States
+    const sim = {
+      t1: { playing: true, t: 0.020, D: 1.0, wave: 'multi' },
+      t2: { playing: true, t: 0.25, D: 0.5, M: 2.0 },
+      t3: { playing: true, t: 0.25, D: 0.25, Cs: 1.0, C0: 0.2 },
+      t4: { playing: true, fs: 0.35, k: 0.40, C0: 10.0, tdotSlider: 70, tdot: 6.3 }
+    };
+
+    function togglePlay(id) {
+      const key = `t${id}`;
+      sim[key].playing = !sim[key].playing;
+      const btn = document.getElementById(`${key}PlayIcon`);
+      btn.textContent = sim[key].playing ? "⏸ Pause" : "▶ Play";
+    }
+
+    function resetSim(id) {
+      if (id === 1) sim.t1.t = 0.005;
+      if (id === 2) sim.t2.t = 0.08;
+      if (id === 3) sim.t3.t = 0.05;
+      if (id === 4) sim.t4.fs = 0.05;
+    }
+
+    function onTimeInput(id, val) {
+      if (id === 1) sim.t1.t = parseFloat(val);
+      if (id === 2) sim.t2.t = parseFloat(val);
+      if (id === 3) sim.t3.t = parseFloat(val);
+      if (id === 4) sim.t4.fs = parseFloat(val);
+    }
+
+    function updateD(id, val) {
+      if (id === 1) {
+        sim.t1.D = parseFloat(val);
+        document.getElementById('t1DLabel').textContent = `${sim.t1.D.toFixed(1)} m²/s`;
+      }
+      if (id === 2) {
+        sim.t2.D = parseFloat(val);
+        document.getElementById('t2DLabel').textContent = `${sim.t2.D.toFixed(2)} mm²/s`;
+      }
+    }
+
+    function updateM(id, val) {
+      sim.t2.M = parseFloat(val);
+      document.getElementById('t2MLabel').textContent = `${sim.t2.M.toFixed(1)} mol/m²`;
+    }
+
+    function updateCs(val) {
+      sim.t3.Cs = parseFloat(val);
+      document.getElementById('t3CsLabel').textContent = `${sim.t3.Cs.toFixed(2)} wt% C`;
+    }
+
+    function updateC0(val) {
+      sim.t3.C0 = parseFloat(val);
+      document.getElementById('t3C0Label').textContent = `${sim.t3.C0.toFixed(2)} wt% C`;
+    }
+
+    function updateK(val) {
+      sim.t4.k = parseFloat(val);
+      document.getElementById('t4KLabel').textContent = sim.t4.k.toFixed(2);
+    }
+
+    function updateT4C0(val) {
+      sim.t4.C0 = parseFloat(val);
+      const lbl = document.getElementById('t4C0Label');
+      if (lbl) lbl.textContent = `${sim.t4.C0.toFixed(0)} wt% B`;
+    }
+
+    function updateTdot(val) {
+      sim.t4.tdotSlider = parseFloat(val);
+      // Logarithmic mapping: 0 -> 0.05 K/s (Equilibrium), 100 -> 50.0 K/s (Scheil)
+      const tdot = 0.05 * Math.pow(1000, sim.t4.tdotSlider / 100);
+      sim.t4.tdot = tdot;
+      const valEl = document.getElementById('t4TdotVal');
+      const modeEl = document.getElementById('t4TdotMode');
+      if (valEl) valEl.textContent = `${tdot < 0.2 ? tdot.toFixed(2) : tdot.toFixed(1)} K/s`;
+      if (modeEl) {
+        if (tdot < 0.15) {
+          modeEl.innerHTML = "Equilibrium: No Gradient (Lever Rule)";
+          modeEl.className = "text-[11px] font-semibold text-[#15803d]";
+        } else if (tdot < 3.0) {
+          modeEl.innerHTML = "Slow Cool: Partial Homogenization";
+          modeEl.className = "text-[11px] font-semibold text-[#b45309]";
+        } else if (tdot < 15.0) {
+          modeEl.innerHTML = "Fast Cool: Scheil Coring (D<sub>S</sub> ≈ 0)";
+          modeEl.className = "text-[11px] font-semibold text-[#d97706]";
+        } else {
+          modeEl.innerHTML = "Rapid Quench: Steep Coring Onion Rings";
+          modeEl.className = "text-[11px] font-semibold text-[#dc2626]";
+        }
+      }
+    }
+
+    function changeWave(val) {
+      sim.t1.wave = val;
+      sim.t1.t = 0.005;
+    }
+
+
+    // =========================================================================
+    // RENDER TAB 1: CURVATURE SMOOTHING ENGINE
+    // =========================================================================
+    function renderTab1() {
+      const cCanvas = document.getElementById('t1CanvasC');
+      const curvCanvas = document.getElementById('t1CanvasCurv');
+      if (!cCanvas || !curvCanvas) return;
+
+      const { ctx: ctx1, width: w1, height: h1 } = setupCanvas(cCanvas);
+      const { ctx: ctx2, width: w2, height: h2 } = setupCanvas(curvCanvas);
+
+      if (sim.t1.playing) {
+        sim.t1.t += 0.001;
+        if (sim.t1.t > 0.40) sim.t1.t = 0.005;
+      }
+      document.getElementById('t1TimeLabel').textContent = `${sim.t1.t.toFixed(3)} s`;
+
+      const t = sim.t1.t;
+      const D = sim.t1.D;
+
+      function evalC(x) {
+        if (sim.t1.wave === 'multi') {
+          return 0.5 + 0.32 * Math.sin(x) * Math.exp(-D * 1 * t) + 0.14 * Math.sin(3 * x) * Math.exp(-D * 9 * t);
+        } else if (sim.t1.wave === 'square') {
+          return 0.5 + 0.35 * Math.sin(x) * Math.exp(-D * 1 * t) + 0.12 * Math.sin(3*x) * Math.exp(-D * 9 * t) + 0.06 * Math.sin(5*x) * Math.exp(-D * 25 * t);
+        } else {
+          return 0.5 + 0.30 * Math.sin(x) * Math.exp(-D * 1 * t) + 0.18 * Math.cos(2*x) * Math.exp(-D * 4 * t);
+        }
+      }
+
+      function evalCurv(x) {
+        if (sim.t1.wave === 'multi') {
+          return -0.32 * 1 * Math.sin(x) * Math.exp(-D * 1 * t) - 0.14 * 9 * Math.sin(3 * x) * Math.exp(-D * 9 * t);
+        } else if (sim.t1.wave === 'square') {
+          return -0.35 * 1 * Math.sin(x) * Math.exp(-D * 1 * t) - 0.12 * 9 * Math.sin(3*x) * Math.exp(-D * 9 * t) - 0.06 * 25 * Math.sin(5*x) * Math.exp(-D * 25 * t);
+        } else {
+          return -0.30 * 1 * Math.sin(x) * Math.exp(-D * 1 * t) - 0.18 * 4 * Math.cos(2*x) * Math.exp(-D * 4 * t);
+        }
+      }
+
+      document.getElementById('t1HarmonicRatio').textContent = Math.exp(-D * 8 * t).toFixed(3);
+
+      const padL = 60, padR = 25, padT = 25, padB = 25;
+      const xMin = -Math.PI, xMax = Math.PI;
+      const yMinC = 0.0, yMaxC = 1.0;
+      const yMinCurv = -1.5, yMaxCurv = 1.5;
+
+      const toScreenX = (x) => padL + ((x - xMin) / (xMax - xMin)) * (w1 - padL - padR);
+      const toScreenYC = (y) => padT + ((yMaxC - y) / (yMaxC - yMinC)) * (h1 - padT - padB);
+      const toScreenYCurv = (y) => padT + ((yMaxCurv - y) / (yMaxCurv - yMinCurv)) * (h2 - padT - padB);
+
+      // --- Draw Grid Top ---
+      ctx1.strokeStyle = "#e2e8f0";
+      ctx1.lineWidth = 1;
+      for (let y = 0.2; y <= 1.0; y += 0.2) {
+        ctx1.beginPath();
+        ctx1.moveTo(padL, toScreenYC(y)); ctx1.lineTo(w1 - padR, toScreenYC(y));
+        ctx1.stroke();
+        ctx1.fillStyle = "#64748b";
+        ctx1.font = "10px sans-serif";
+        ctx1.fillText(y.toFixed(1), padL - 24, toScreenYC(y) + 3);
+      }
+
+      // Y-Axis Label
+      drawYAxisLabel(ctx1, "Concentration C(x,t)", 18, h1 / 2);
+
+      // Initial ghost curve
+      ctx1.strokeStyle = "#cbd5e1";
+      ctx1.lineWidth = 1.5;
+      ctx1.setLineDash([4, 4]);
+      ctx1.beginPath();
+      for (let px = padL; px <= w1 - padR; px += 2) {
+        const x = xMin + ((px - padL) / (w1 - padL - padR)) * (xMax - xMin);
+        const yInit = (sim.t1.wave === 'multi') ? 0.5 + 0.32*Math.sin(x) + 0.14*Math.sin(3*x) : 0.5 + 0.35*Math.sin(x) + 0.12*Math.sin(3*x) + 0.06*Math.sin(5*x);
+        const py = toScreenYC(yInit);
+        if (px === padL) ctx1.moveTo(px, py); else ctx1.lineTo(px, py);
+      }
+      ctx1.stroke();
+      ctx1.setLineDash([]);
+
+      // Main C(x,t) curve
+      const nSteps = 300;
+      let prevX = xMin, prevY = evalC(xMin), prevCurv = evalCurv(xMin);
+      for (let i = 1; i <= nSteps; i++) {
+        const currX = xMin + (i / nSteps) * (xMax - xMin);
+        const currY = evalC(currX);
+        const currCurv = evalCurv(currX);
+
+        ctx1.beginPath();
+        ctx1.moveTo(toScreenX(prevX), toScreenYC(prevY));
+        ctx1.lineTo(toScreenX(currX), toScreenYC(currY));
+        ctx1.lineWidth = 3.2;
+        ctx1.strokeStyle = (currCurv < 0) ? '#C41230' : '#2563EB';
+        ctx1.stroke();
+
+        // Inflection point
+        if ((prevCurv <= 0 && currCurv > 0) || (prevCurv >= 0 && currCurv < 0)) {
+          ctx1.fillStyle = "#D97706";
+          ctx1.beginPath(); ctx1.arc(toScreenX(currX), toScreenYC(currY), 5, 0, 2*Math.PI); ctx1.fill();
+          ctx1.strokeStyle = "#0f172a"; ctx1.lineWidth = 1.5; ctx1.stroke();
+        }
+
+        prevX = currX; prevY = currY; prevCurv = currCurv;
+      }
+
+      // Clean static physical legend in bottom right of Canvas 1 (zero overlap with curve or peaks)
+      const legW = 205, legH = 54;
+      const legX = w1 - padR - legW - 4;
+      const legY = h1 - padB - legH - 4;
+
+      ctx1.fillStyle = "rgba(255, 255, 255, 0.94)";
+      ctx1.strokeStyle = "#cbd5e1";
+      ctx1.lineWidth = 1;
+      ctx1.beginPath();
+      ctx1.roundRect(legX, legY, legW, legH, 4);
+      ctx1.fill();
+      ctx1.stroke();
+
+      // Row 1: Red = Concave Down: Erodes (↓)
+      ctx1.strokeStyle = "#C41230";
+      ctx1.lineWidth = 2.8;
+      ctx1.beginPath();
+      ctx1.moveTo(legX + 8, legY + 13); ctx1.lineTo(legX + 26, legY + 13);
+      ctx1.stroke();
+      ctx1.fillStyle = "#C41230";
+      ctx1.font = "bold 9.5px sans-serif";
+      ctx1.textAlign = "left";
+      ctx1.fillText("Concave Down: Erodes (↓)", legX + 32, legY + 16);
+
+      // Row 2: Blue = Concave Up: Fills In (↑)
+      ctx1.strokeStyle = "#2563EB";
+      ctx1.lineWidth = 2.8;
+      ctx1.beginPath();
+      ctx1.moveTo(legX + 8, legY + 28); ctx1.lineTo(legX + 26, legY + 28);
+      ctx1.stroke();
+      ctx1.fillStyle = "#2563EB";
+      ctx1.font = "bold 9.5px sans-serif";
+      ctx1.fillText("Concave Up: Fills In (↑)", legX + 32, legY + 31);
+
+      // Row 3: Inflection Point (Gold Dot ⊙)
+      ctx1.fillStyle = "#D97706";
+      ctx1.beginPath();
+      ctx1.arc(legX + 17, legY + 43, 3.8, 0, 2 * Math.PI);
+      ctx1.fill();
+      ctx1.strokeStyle = "#0f172a";
+      ctx1.lineWidth = 1.2;
+      ctx1.stroke();
+      ctx1.fillStyle = "#b45309";
+      ctx1.font = "bold 9.5px sans-serif";
+      ctx1.fillText("Inflection Point: Stationary (⊙)", legX + 32, legY + 46);
+
+      // --- Bottom Curvature Panel ---
+      ctx2.strokeStyle = "#64748b";
+      ctx2.lineWidth = 1;
+      ctx2.beginPath();
+      ctx2.moveTo(padL, toScreenYCurv(0)); ctx2.lineTo(w2 - padR, toScreenYCurv(0));
+      ctx2.stroke();
+
+      drawYAxisLabel(ctx2, "Rate ∂C/∂t", 18, h2 / 2);
+
+      // Curvature fill: Red where curv < 0 (depleting), Blue where curv > 0 (filling)
+      const yZero = toScreenYCurv(0);
+      for (let px = padL; px <= w2 - padR; px += 2) {
+        const x = xMin + ((px - padL) / (w2 - padL - padR)) * (xMax - xMin);
+        const curv = evalCurv(x);
+        const yCurv = toScreenYCurv(curv);
+        if (curv < 0) {
+          ctx2.fillStyle = "rgba(196, 18, 48, 0.22)";
+          ctx2.fillRect(px, yZero, 2, yCurv - yZero);
+        } else {
+          ctx2.fillStyle = "rgba(37, 99, 235, 0.22)";
+          ctx2.fillRect(px, yCurv, 2, yZero - yCurv);
+        }
+      }
+
+      // Curvature line
+      ctx2.strokeStyle = "#1e293b";
+      ctx2.lineWidth = 1.8;
+      ctx2.beginPath();
+      for (let px = padL; px <= w2 - padR; px += 2) {
+        const x = xMin + ((px - padL) / (w2 - padL - padR)) * (xMax - xMin);
+        const curv = evalCurv(x);
+        if (px === padL) ctx2.moveTo(px, toScreenYCurv(curv)); else ctx2.lineTo(px, toScreenYCurv(curv));
+      }
+      ctx2.stroke();
+
+      // X-Axis Ticks & Labels
+      ctx2.fillStyle = "#64748b";
+      ctx2.font = "10px sans-serif";
+      ctx2.textAlign = "center";
+      const xTicks = [
+        { val: -Math.PI, lbl: "-π" },
+        { val: -Math.PI / 2, lbl: "-π/2" },
+        { val: 0, lbl: "0" },
+        { val: Math.PI / 2, lbl: "π/2" },
+        { val: Math.PI, lbl: "π" }
+      ];
+      xTicks.forEach(t => {
+        const sx = toScreenX(t.val);
+        ctx2.beginPath();
+        ctx2.moveTo(sx, h2 - padB); ctx2.lineTo(sx, h2 - padB + 4);
+        ctx2.strokeStyle = "#94a3b8"; ctx2.stroke();
+        ctx2.fillText(t.lbl, sx, h2 - padB + 14);
+      });
+      ctx2.fillText("Position x", w2 / 2, h2 - 2);
+    }
+
+
+    // =========================================================================
+    // RENDER TAB 2: GAUSSIAN SOURCE (CANONICAL CASE A)
+    // =========================================================================
+    function renderTab2() {
+      const c1 = document.getElementById('t2Canvas1D');
+      const c2 = document.getElementById('t2Canvas2D');
+      if (!c1 || !c2) return;
+
+      const { ctx: ctx1, width: w1, height: h1 } = setupCanvas(c1);
+      const { ctx: ctx2, width: w2, height: h2 } = setupCanvas(c2);
+
+      if (sim.t2.playing) {
+        sim.t2.t += 0.006;
+        if (sim.t2.t > 2.5) sim.t2.t = 0.08;
+        document.getElementById('t2TimeSlider').value = sim.t2.t;
+      }
+      document.getElementById('t2TimeLabel').textContent = `${sim.t2.t.toFixed(2)} s`;
+
+      const t = sim.t2.t;
+      const D = sim.t2.D;
+      const M = sim.t2.M;
+      const sigma = Math.sqrt(2 * D * t);
+      const cPeak = M / (2 * Math.sqrt(Math.PI * D * t));
+
+      document.getElementById('t2AreaReadout').textContent = `${M.toFixed(2)} mol/m² ✓`;
+      document.getElementById('t2PeakReadout').textContent = cPeak.toFixed(2);
+      document.getElementById('t2SigmaReadout').textContent = `${sigma.toFixed(2)} mm`;
+
+      function evalGauss(x) {
+        return (M / (2 * Math.sqrt(Math.PI * D * t))) * Math.exp(- (x*x) / (4 * D * t));
+      }
+
+      // Shared horizontal bounds ensuring 100% pixel alignment between Top and Bottom!
+      const padL = 60, padR = 25;
+      const padT1 = 25, padB1 = 25;
+      const padT2 = 15, padB2 = 25;
+      const xMin = -4.0, xMax = 4.0;
+      const yMin = 0.0, yMax = 2.4;
+
+      const toScreenX = (x) => padL + ((x - xMin) / (xMax - xMin)) * (w1 - padL - padR);
+      const toScreenY1 = (y) => padT1 + ((yMax - y) / (yMax - yMin)) * (h1 - padT1 - padB1);
+
+      // --- Top Panel Grid ---
+      ctx1.strokeStyle = "#e2e8f0";
+      ctx1.lineWidth = 1;
+      for (let y = 0.5; y <= 2.0; y += 0.5) {
+        ctx1.beginPath();
+        ctx1.moveTo(padL, toScreenY1(y)); ctx1.lineTo(w1 - padR, toScreenY1(y));
+        ctx1.stroke();
+        ctx1.fillStyle = "#64748b";
+        ctx1.font = "10px sans-serif";
+        ctx1.fillText(y.toFixed(1), padL - 24, toScreenY1(y) + 3);
+      }
+
+      // Vertical alignment grid lines in top panel matching bottom ticks
+      ctx1.strokeStyle = "#f1f5f9";
+      ctx1.lineWidth = 1;
+      for (let x = -3; x <= 3; x += 1) {
+        const sx = toScreenX(x);
+        ctx1.beginPath();
+        ctx1.moveTo(sx, padT1); ctx1.lineTo(sx, h1 - padB1);
+        ctx1.stroke();
+      }
+
+      // Centerline in top panel
+      const sxZeroTop = toScreenX(0);
+      ctx1.strokeStyle = "#cbd5e1";
+      ctx1.lineWidth = 1.2;
+      ctx1.setLineDash([3, 3]);
+      ctx1.beginPath();
+      ctx1.moveTo(sxZeroTop, padT1); ctx1.lineTo(sxZeroTop, toScreenY1(0));
+      ctx1.stroke();
+      ctx1.setLineDash([]);
+
+      // Y-Axis Label
+      drawYAxisLabel(ctx1, "Concentration C(x,t) [mol/m³]", 18, h1 / 2);
+
+      // Conserved Area Shading
+      ctx1.beginPath();
+      ctx1.moveTo(toScreenX(xMin), toScreenY1(0));
+      for (let px = padL; px <= w1 - padR; px += 2) {
+        const x = xMin + ((px - padL) / (w1 - padL - padR)) * (xMax - xMin);
+        ctx1.lineTo(px, toScreenY1(evalGauss(x)));
+      }
+      ctx1.lineTo(toScreenX(xMax), toScreenY1(0));
+      ctx1.closePath();
+      ctx1.fillStyle = "rgba(245, 158, 11, 0.28)";
+      ctx1.fill();
+
+      // Gaussian curve
+      ctx1.strokeStyle = "#C41230";
+      ctx1.lineWidth = 3.0;
+      ctx1.beginPath();
+      for (let px = padL; px <= w1 - padR; px += 2) {
+        const x = xMin + ((px - padL) / (w1 - padL - padR)) * (xMax - xMin);
+        const y = evalGauss(x);
+        if (px === padL) ctx1.moveTo(px, toScreenY1(y)); else ctx1.lineTo(px, toScreenY1(y));
+      }
+      ctx1.stroke();
+
+      // Conserved mass indicator in top left of 1D plot
+      ctx1.fillStyle = "#b45309";
+      ctx1.font = "bold 9.5px sans-serif";
+      drawSub(ctx1, "Conserved Mass M", "0", ` = ${M.toFixed(1)} mol/m²`, padL + 12, padT1 + 14);
+
+      // Peak point marker with subscripted C_max label
+      ctx1.fillStyle = "#D97706";
+      ctx1.beginPath();
+      ctx1.arc(toScreenX(0), toScreenY1(cPeak), 5, 0, 2*Math.PI);
+      ctx1.fill();
+      ctx1.strokeStyle = "#0f172a";
+      ctx1.lineWidth = 1.2;
+      ctx1.stroke();
+
+      ctx1.fillStyle = "#C41230";
+      ctx1.font = "bold 9.5px sans-serif";
+      drawSub(ctx1, "C", "max", ` = ${cPeak.toFixed(2)}`, toScreenX(0) + 8, toScreenY1(cPeak) + 3);
+
+      // Caliper width
+      const yCaliper = cPeak * Math.exp(-0.5);
+      const sx1 = toScreenX(-sigma), sx2 = toScreenX(sigma), syC = toScreenY1(yCaliper);
+      ctx1.strokeStyle = "#2563EB";
+      ctx1.lineWidth = 1.8;
+      ctx1.beginPath();
+      ctx1.moveTo(sx1, syC); ctx1.lineTo(sx2, syC);
+      ctx1.moveTo(sx1, syC - 5); ctx1.lineTo(sx1, syC + 5);
+      ctx1.moveTo(sx2, syC - 5); ctx1.lineTo(sx2, syC + 5);
+      ctx1.stroke();
+      ctx1.fillStyle = "#2563EB";
+      ctx1.font = "bold 9.5px sans-serif";
+      ctx1.fillText(`2σ = 2√(2Dt) = ${(2*sigma).toFixed(2)} mm`, toScreenX(0) - 52, syC - 6);
+
+      // --- Bottom Panel: 2D Couple Bar (PIXEL-PERFECT HORIZONTAL ALIGNMENT & DPR SAFE) ---
+      drawYAxisLabel(ctx2, "2D Bar", 18, h2 / 2);
+
+      const barW = w2 - padL - padR;
+      const barH = h2 - padT2 - padB2;
+
+      // Hardware-accelerated, DPR-safe linear gradient spanning strictly between padL and w2 - padR
+      const barGrad = ctx2.createLinearGradient(padL, 0, w2 - padR, 0);
+      const nGradStops = 80;
+      for (let i = 0; i <= nGradStops; i++) {
+        const frac = i / nGradStops;
+        const x = xMin + frac * (xMax - xMin);
+        const c = evalGauss(x);
+        const norm = Math.min(1.0, c / 1.8);
+
+        // Smooth physical colormap:
+        // Zero tracer background (norm = 0): clean metallic Slate-100 (241, 245, 249)
+        // Mid concentration (norm = 0.4): warm glowing Amber-500 (245, 158, 11)
+        // Peak tracer concentration (norm = 1.0): intense Carnegie Red (196, 18, 48)
+        let r, g, b;
+        if (norm < 0.4) {
+          const f = norm / 0.4;
+          r = Math.round(241 + f * (245 - 241));
+          g = Math.round(245 + f * (158 - 245));
+          b = Math.round(249 + f * (11 - 249));
+        } else {
+          const f = (norm - 0.4) / 0.6;
+          r = Math.round(245 + f * (196 - 245));
+          g = Math.round(158 + f * (18 - 158));
+          b = Math.round(11 + f * (48 - 11));
+        }
+        barGrad.addColorStop(frac, `rgb(${r}, ${g}, ${b})`);
+      }
+
+      // Fill 2D bar with the gradient (respects DPR scaling)
+      ctx2.fillStyle = barGrad;
+      ctx2.fillRect(padL, padT2, barW, barH);
+
+      // Border around 2D bar
+      ctx2.strokeStyle = "#0f172a";
+      ctx2.lineWidth = 1.2;
+      ctx2.strokeRect(padL, padT2, barW, barH);
+
+      // Center deposit line x = 0 aligned with top
+      const sxZero = toScreenX(0);
+      ctx2.strokeStyle = "#0f172a";
+      ctx2.lineWidth = 1.8;
+      ctx2.setLineDash([3, 3]);
+      ctx2.beginPath();
+      ctx2.moveTo(sxZero, padT2); ctx2.lineTo(sxZero, padT2 + barH);
+      ctx2.stroke();
+      ctx2.setLineDash([]);
+
+      // Tick marks and X labels under the 2D bar
+      ctx2.fillStyle = "#64748b";
+      ctx2.font = "10px sans-serif";
+      ctx2.textAlign = "center";
+      for (let x = -3; x <= 3; x += 1) {
+        const sx = toScreenX(x);
+        ctx2.beginPath();
+        ctx2.moveTo(sx, padT2 + barH); ctx2.lineTo(sx, padT2 + barH + 4);
+        ctx2.strokeStyle = "#94a3b8"; ctx2.stroke();
+        ctx2.fillText(x, sx, padT2 + barH + 14);
+      }
+      ctx2.fillText("Position Along Couple x [mm]", w2 / 2, h2 - 2);
+    }
+
+
+    // =========================================================================
+    // RENDER TAB 3: CARBURIZATION (CANONICAL CASE B)
+    // =========================================================================
+    function renderTab3() {
+      const c1 = document.getElementById('t3Canvas1D');
+      const c2 = document.getElementById('t3CanvasGear');
+      if (!c1 || !c2) return;
+
+      const { ctx: ctx1, width: w1, height: h1 } = setupCanvas(c1);
+      const { ctx: ctx2, width: w2, height: h2 } = setupCanvas(c2);
+
+      if (sim.t3.playing) {
+        sim.t3.t += 0.005;
+        if (sim.t3.t > 3.0) sim.t3.t = 0.05;
+        document.getElementById('t3TimeSlider').value = sim.t3.t;
+      }
+      document.getElementById('t3TimeLabel').textContent = `${sim.t3.t.toFixed(2)} hr`;
+
+      const t = sim.t3.t;
+      const D = sim.t3.D;
+      const Cs = sim.t3.Cs;
+      const C0 = sim.t3.C0;
+      const xPen = 2 * Math.sqrt(D * t);
+      document.getElementById('t3PenReadout').textContent = `${xPen.toFixed(2)} mm`;
+
+      function evalErf(x, time) {
+        return Cs - (Cs - C0) * mathErf(x / (2 * Math.sqrt(D * time)));
+      }
+
+      // --- Left Panel: 1D Depth Profile ---
+      const padL = 60, padR = 20, padT = 25, padB = 30;
+      const xMax = 3.0, yMin = 0.0, yMax = 1.5;
+
+      const toScreenX = (x) => padL + (x / xMax) * (w1 - padL - padR);
+      const toScreenY = (y) => padT + ((yMax - y) / (yMax - yMin)) * (h1 - padT - padB);
+
+      // Grid
+      ctx1.strokeStyle = "#e2e8f0";
+      ctx1.lineWidth = 1;
+      for (let y = 0.2; y <= 1.4; y += 0.2) {
+        ctx1.beginPath();
+        ctx1.moveTo(padL, toScreenY(y)); ctx1.lineTo(w1 - padR, toScreenY(y));
+        ctx1.stroke();
+        ctx1.fillStyle = "#64748b";
+        ctx1.font = "10px sans-serif";
+        ctx1.fillText(y.toFixed(1), padL - 25, toScreenY(y) + 3);
+      }
+
+      drawYAxisLabel(ctx1, "Carbon Conc C(x,t) [wt% C]", 18, h1 / 2);
+
+      // Hardness threshold line
+      const cHard = 0.40;
+      ctx1.strokeStyle = "#D97706";
+      ctx1.lineWidth = 1.2;
+      ctx1.setLineDash([3, 3]);
+      ctx1.beginPath();
+      ctx1.moveTo(padL, toScreenY(cHard)); ctx1.lineTo(w1 - padR, toScreenY(cHard));
+      ctx1.stroke();
+      ctx1.setLineDash([]);
+      ctx1.fillStyle = "#D97706";
+      ctx1.font = "9.5px sans-serif";
+      ctx1.textAlign = "right";
+      ctx1.fillText("Hardened Case Threshold (0.40 wt% C)", w1 - padR - 10, toScreenY(cHard) - 5);
+      ctx1.textAlign = "left";
+
+      // Ghost milestone curves (t = 0.25 hr and t = 1.00 hr)
+      // Staggered Y offsets so milestone tags NEVER overlap each other, the curves, or the axes!
+      const milestones = [
+        { time: 0.25, xPen: 0.50, yOffset: -18, showLeader: false },
+        { time: 1.00, xPen: 1.00, yOffset: -40, showLeader: true }
+      ];
+
+      milestones.forEach((ms) => {
+        if (ms.time <= t) {
+          ctx1.strokeStyle = "#94a3b8";
+          ctx1.lineWidth = 1.5;
+          ctx1.setLineDash([4, 4]);
+          ctx1.beginPath();
+          for (let px = padL; px <= w1 - padR; px += 2) {
+            const x = ((px - padL) / (w1 - padL - padR)) * xMax;
+            const y = evalErf(x, ms.time);
+            if (px === padL) ctx1.moveTo(px, toScreenY(y)); else ctx1.lineTo(px, toScreenY(y));
+          }
+          ctx1.stroke();
+          ctx1.setLineDash([]);
+
+          const msX = ms.xPen;
+          const sx = toScreenX(msX);
+          const sy = toScreenY(evalErf(msX, ms.time));
+
+          // Dot on curve at penetration depth
+          ctx1.fillStyle = "#64748b";
+          ctx1.beginPath();
+          ctx1.arc(sx, sy, 3.5, 0, 2*Math.PI);
+          ctx1.fill();
+
+          // Staggered position & leader line
+          const badgeY = sy + ms.yOffset;
+          if (ms.showLeader) {
+            ctx1.strokeStyle = "#94a3b8";
+            ctx1.lineWidth = 1.0;
+            ctx1.setLineDash([2, 2]);
+            ctx1.beginPath();
+            ctx1.moveTo(sx, sy - 4);
+            ctx1.lineTo(sx, badgeY + 9);
+            ctx1.stroke();
+            ctx1.setLineDash([]);
+          }
+
+          // Compact pill badge (anti-collision)
+          const badgeText = `t = ${ms.time.toFixed(2)}h (${msX.toFixed(2)}mm)`;
+          ctx1.font = "bold 8.5px sans-serif";
+          ctx1.textAlign = "center";
+          const tw = ctx1.measureText(badgeText).width;
+          const bw = tw + 10;
+          const bh = 15;
+
+          ctx1.fillStyle = "rgba(255, 255, 255, 0.95)";
+          ctx1.strokeStyle = "#94a3b8";
+          ctx1.lineWidth = 1;
+          ctx1.beginPath();
+          ctx1.roundRect(sx - bw / 2, badgeY - bh / 2, bw, bh, 3);
+          ctx1.fill();
+          ctx1.stroke();
+
+          ctx1.fillStyle = "#334155";
+          ctx1.fillText(badgeText, sx, badgeY + 3);
+        }
+      });
+      ctx1.textAlign = "left";
+
+      // Current curve
+      ctx1.strokeStyle = "#C41230";
+      ctx1.lineWidth = 3.0;
+      ctx1.beginPath();
+      for (let px = padL; px <= w1 - padR; px += 2) {
+        const x = ((px - padL) / (w1 - padL - padR)) * xMax;
+        const y = evalErf(x, t);
+        if (px === padL) ctx1.moveTo(px, toScreenY(y)); else ctx1.lineTo(px, toScreenY(y));
+      }
+      ctx1.stroke();
+
+      // Pinned surface anchor
+      ctx1.fillStyle = "#C41230";
+      ctx1.fillRect(toScreenX(0) - 4, toScreenY(Cs) - 4, 8, 8);
+      const pinY = toScreenY(Cs) <= padT + 22 ? toScreenY(Cs) + 14 : toScreenY(Cs) - 7;
+      const pinTxt = "⚓ Pinned C(0,t) = Cs";
+      ctx1.font = "bold 10px sans-serif";
+      const pinW = ctx1.measureText(pinTxt).width;
+      ctx1.fillStyle = "rgba(255, 255, 255, 0.90)";
+      ctx1.fillRect(padL + 6, pinY - 10, pinW + 4, 13);
+      ctx1.fillStyle = "#C41230";
+      ctx1.fillText(pinTxt, padL + 8, pinY);
+
+      // Penetration line x_pen
+      const sxPen = toScreenX(xPen);
+      ctx1.strokeStyle = "#2563EB";
+      ctx1.lineWidth = 1.5;
+      ctx1.setLineDash([3, 3]);
+      ctx1.beginPath();
+      ctx1.moveTo(sxPen, padT); ctx1.lineTo(sxPen, h1 - padB);
+      ctx1.stroke();
+      ctx1.setLineDash([]);
+
+      // Top label badge with background to prevent any overlap
+      ctx1.font = "bold 9.5px sans-serif";
+      const wX = ctx1.measureText("x").width;
+      ctx1.font = "bold 7.5px sans-serif";
+      const wSub = ctx1.measureText("pen").width;
+      ctx1.font = "bold 9.5px sans-serif";
+      const restTxt = ` = ${xPen.toFixed(2)} mm`;
+      const wRest = ctx1.measureText(restTxt).width;
+      const totalWPen = wX + wSub + wRest;
+
+      ctx1.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctx1.strokeStyle = "#bfdbfe";
+      ctx1.lineWidth = 1;
+      ctx1.beginPath();
+      ctx1.roundRect(sxPen + 3, padT + 2, totalWPen + 8, 16, 3);
+      ctx1.fill();
+      ctx1.stroke();
+
+      ctx1.fillStyle = "#2563EB";
+      ctx1.font = "bold 9.5px sans-serif";
+      ctx1.fillText("x", sxPen + 7, padT + 14);
+      ctx1.font = "bold 7.5px sans-serif";
+      ctx1.fillText("pen", sxPen + 7 + wX, padT + 16);
+      ctx1.font = "bold 9.5px sans-serif";
+      ctx1.fillText(restTxt, sxPen + 7 + wX + wSub, padT + 14);
+
+      // X-Axis
+      ctx1.fillStyle = "#64748b";
+      ctx1.font = "10px sans-serif";
+      ctx1.textAlign = "center";
+      for (let x = 0.5; x <= 3.0; x += 0.5) {
+        ctx1.fillText(x.toFixed(1), toScreenX(x), h1 - padB + 14);
+      }
+      ctx1.fillText("Depth into Steel x [mm]", w1 / 2, h1 - 5);
+      ctx1.textAlign = "left";
+
+      // --- Right Panel: Part Cross-Section with UNIFORM NORMAL CASE DEPTH ---
+      ctx2.fillStyle = "#ffffff";
+      ctx2.fillRect(0, 0, w2, h2);
+
+      drawYAxisLabel(ctx2, "Section Height y", 15, h2 / 2);
+
+      const toothCenterX = w2 * 0.45;
+      const toothCenterY = h2 * 0.50;
+
+      // Base part geometry
+      const toothPoints = [];
+      const nPts = 100;
+      for (let i = 0; i <= nPts; i++) {
+        const u = (i / nPts) * 2 - 1; // -1 to +1
+        const y = u * 110;
+        const x = 70 - 35 * Math.pow(Math.abs(u), 1.7);
+        toothPoints.push({ x, y });
+      }
+
+      ctx2.save();
+      ctx2.translate(toothCenterX, toothCenterY);
+
+      // 1. Draw Core Steel Body
+      ctx2.beginPath();
+      ctx2.moveTo(-60, -110);
+      for (let pt of toothPoints) ctx2.lineTo(pt.x, pt.y);
+      ctx2.lineTo(-60, 110);
+      ctx2.closePath();
+      ctx2.fillStyle = "#cbd5e1";
+      ctx2.fill();
+      ctx2.strokeStyle = "#475569";
+      ctx2.lineWidth = 1.5;
+      ctx2.stroke();
+
+      // 2. Draw Uniform Normal Case Crust (Scaled by xPen)
+      const crustThickness = Math.min(22, xPen * 10);
+      ctx2.beginPath();
+      // Outer profile
+      for (let i = 0; i < toothPoints.length; i++) {
+        const pt = toothPoints[i];
+        if (i === 0) ctx2.moveTo(pt.x, pt.y); else ctx2.lineTo(pt.x, pt.y);
+      }
+      // Inner contour with uniform normal offset
+      for (let i = toothPoints.length - 1; i >= 0; i--) {
+        const pt = toothPoints[i];
+        const innerX = pt.x - crustThickness;
+        ctx2.lineTo(innerX, pt.y);
+      }
+      ctx2.closePath();
+      ctx2.fillStyle = "rgba(217, 119, 6, 0.82)";
+      ctx2.fill();
+      ctx2.strokeStyle = "#b45309";
+      ctx2.lineWidth = 1.2;
+      ctx2.stroke();
+
+      // Visual depth caliper across crust
+      const calY = 55;
+      const calU = calY / 110;
+      const calOuterX = 70 - 35 * Math.pow(Math.abs(calU), 1.7);
+      const calInnerX = calOuterX - crustThickness;
+      ctx2.strokeStyle = "#2563EB";
+      ctx2.lineWidth = 1.5;
+      ctx2.beginPath();
+      ctx2.moveTo(calInnerX, calY); ctx2.lineTo(calOuterX, calY);
+      ctx2.moveTo(calInnerX, calY - 4); ctx2.lineTo(calInnerX, calY + 4);
+      ctx2.moveTo(calOuterX, calY - 4); ctx2.lineTo(calOuterX, calY + 4);
+      ctx2.stroke();
+      ctx2.fillStyle = "#2563EB";
+      const calMidX = (calInnerX + calOuterX) / 2;
+      ctx2.font = "bold 9.5px sans-serif";
+      const wX2 = ctx2.measureText("x").width;
+      ctx2.font = "bold 7.5px sans-serif";
+      const wSub2 = ctx2.measureText("pen").width;
+      const totalW = wX2 + wSub2;
+      const startX = calMidX - totalW / 2;
+      ctx2.textAlign = "left";
+      ctx2.font = "bold 9.5px sans-serif";
+      ctx2.fillText("x", startX, calY - 6);
+      ctx2.font = "bold 7.5px sans-serif";
+      ctx2.fillText("pen", startX + wX2, calY - 4);
+
+      ctx2.restore();
+
+      // Part Annotations
+      ctx2.fillStyle = "#0f172a";
+      ctx2.font = "bold 11px sans-serif";
+      ctx2.fillText("Part Cross-Section", 30, 20);
+
+      ctx2.fillStyle = "#D97706";
+      ctx2.font = "bold 9.5px sans-serif";
+      ctx2.fillText(`Uniform Case Depth: ${xPen.toFixed(2)} mm`, 30, h2 - 14);
+
+      ctx2.textAlign = "right";
+      ctx2.fillStyle = "#64748b";
+      ctx2.font = "9px sans-serif";
+      ctx2.fillText("1D Normal Penetration", w2 - 30, h2 - 14);
+      ctx2.textAlign = "left";
+    }
+
+
+    // =========================================================================
+    // RENDER TAB 4: SOLIDIFICATION & CORING (PHASE DIAGRAM, 1D PROFILE & 2D GRAIN)
+    // =========================================================================
+    function renderTab4() {
+      const cPhase = document.getElementById('t4CanvasPhase');
+      const c1 = document.getElementById('t4Canvas1D');
+      const c2 = document.getElementById('t4Canvas2D');
+      if (!cPhase || !c1 || !c2) return;
+
+      const { ctx: ctxP, width: wP, height: hP } = setupCanvas(cPhase);
+      const { ctx: ctx1, width: w1, height: h1 } = setupCanvas(c1);
+      const { ctx: ctx2, width: w2, height: h2 } = setupCanvas(c2);
+
+      if (sim.t4.playing) {
+        sim.t4.fs += 0.002;
+        if (sim.t4.fs > 0.88) sim.t4.fs = 0.05;
+        document.getElementById('t4FsSlider').value = sim.t4.fs;
+      }
+      const fsPctStr = `${Math.round(sim.t4.fs * 100)}%`;
+      document.getElementById('t4FsLabel').textContent = fsPctStr;
+
+      const fs = sim.t4.fs;
+      const k = sim.t4.k;
+      const C0 = sim.t4.C0 !== undefined ? sim.t4.C0 : 10.0;
+      const Rmax = 100.0;
+      const xInt = fs * Rmax;
+
+      // Update C0 label if present
+      const c0Lbl = document.getElementById('t4C0Label');
+      if (c0Lbl) c0Lbl.textContent = `${C0.toFixed(0)} wt% B`;
+
+      // Cooling Rate & Kinetic Coupled Scaling
+      const tdot = sim.t4.tdot !== undefined ? sim.t4.tdot : 6.3;
+
+      // Homogenization factor eta in [0, 1]
+      // eta = 1 => Equilibrium Lever Rule (No Gradient, flat green disc)
+      // eta = 0 => Scheil Non-Equilibrium (Steep Gradient, coring onion rings)
+      let eta = 1.0 / (1.0 + Math.pow(tdot / 0.75, 1.35));
+      if (tdot <= 0.08) eta = 1.0;
+      if (tdot >= 40.0) eta = 0.0;
+
+      // Equilibrium Lever Rule compositions at current solid fraction fs
+      const cL_eq = C0 / (1.0 - (1.0 - k) * fs);
+      const cS_eq = k * cL_eq;
+      const cS_bar_eq = cS_eq;
+
+      // Scheil (frozen solidus) composition at interface & average solid
+      const cS_scheil = k * C0 * Math.pow(1.0 - Math.min(0.92, fs), k - 1.0);
+      const cL_scheil = cS_scheil / k;
+      const cS_bar_scheil = fs > 0.005 ? (C0 - (1.0 - fs) * cL_scheil) / fs : (k * C0);
+
+      // Actual compositions at interface & average solid
+      const cS_star = (1.0 - eta) * cS_scheil + eta * cS_eq;
+      const cL_star = (1.0 - eta) * cL_scheil + eta * cL_eq;
+      const cS_bar = (1.0 - eta) * cS_bar_scheil + eta * cS_bar_eq;
+
+      // Update badge readouts
+      const csStarEl = document.getElementById('t4CsStarReadout');
+      if (csStarEl) csStarEl.textContent = `${cS_star.toFixed(1)} wt% B`;
+      const clStarEl = document.getElementById('t4ClStarReadout');
+      if (clStarEl) clStarEl.textContent = `${cL_star.toFixed(1)} wt% B`;
+      const csBarEl = document.getElementById('t4CsBarReadout');
+      if (csBarEl) csBarEl.textContent = `${cS_bar.toFixed(1)} wt% B`;
+      const regEl = document.getElementById('t4RegimeReadout');
+      if (regEl) {
+        if (eta > 0.75) {
+          regEl.textContent = "Equilibrium (No Gradient)";
+          regEl.className = "font-mono font-bold text-[#15803D]";
+        } else if (eta > 0.25) {
+          regEl.textContent = "Partial Coring";
+          regEl.className = "font-mono font-bold text-[#D97706]";
+        } else {
+          regEl.textContent = "Scheil Coring (Steep)";
+          regEl.className = "font-mono font-bold text-[#DC2626]";
+        }
+      }
+      const diffEl = document.getElementById('t4DiffusionReadout');
+      if (diffEl) {
+        if (eta > 0.75) {
+          diffEl.textContent = "Active (Homogenizing)";
+          diffEl.className = "font-mono font-bold text-[#15803D]";
+        } else {
+          diffEl.innerHTML = "Frozen (D<sub>S</sub> ≈ 0)";
+          diffEl.className = "font-mono font-bold text-[#64748b]";
+        }
+      }
+
+      // =======================================================================
+      // 1. TOP-LEFT PANEL: ISOMORPHOUS PHASE DIAGRAM (A-B SYSTEM) & TIE-LINE
+      // =======================================================================
+      const padPL = 55, padPR = 20, padPT = 26, padPB = 26;
+      const cMaxP = 50.0; // wt% B
+      const tMinP = 1100.0, tMaxP = 1450.0; // °C
+      const TA = 1400.0; // Melting point of pure A
+
+      const toScreenPX = (c) => padPL + (c / cMaxP) * (wP - padPL - padPR);
+      const toScreenPY = (t) => padPT + ((tMaxP - t) / (tMaxP - tMinP)) * (hP - padPT - padPB);
+
+      // Phase boundaries: Liquidus and Solidus with k = 0.40
+      const slopeL = 7.0;
+      const slopeS = slopeL / k; // 17.5
+      function T_liq(c) { return TA - slopeL * c; }
+      function T_sol(c) { return TA - slopeS * c; }
+      function C_liq(t) { return (TA - t) / slopeL; }
+      function C_sol(t) { return (TA - t) / slopeS; }
+
+      // Current interface temperature following liquidus composition cL_star
+      const T_curr = Math.max(tMinP + 12, T_liq(cL_star));
+
+      // Shaded phase regions
+      // Liquid phase (above Liquidus): soft blue
+      ctxP.fillStyle = "rgba(59, 130, 246, 0.08)";
+      ctxP.beginPath();
+      ctxP.moveTo(toScreenPX(0), toScreenPY(TA));
+      for (let c = 0; c <= cMaxP; c += 2) {
+        ctxP.lineTo(toScreenPX(c), toScreenPY(T_liq(c)));
+      }
+      ctxP.lineTo(toScreenPX(cMaxP), toScreenPY(tMaxP));
+      ctxP.lineTo(toScreenPX(0), toScreenPY(tMaxP));
+      ctxP.closePath();
+      ctxP.fill();
+
+      // Solid phase (below Solidus): soft green
+      ctxP.fillStyle = "rgba(16, 185, 129, 0.08)";
+      ctxP.beginPath();
+      ctxP.moveTo(toScreenPX(0), toScreenPY(TA));
+      const cSolEnd = C_sol(tMinP);
+      for (let c = 0; c <= cSolEnd; c += 1) {
+        ctxP.lineTo(toScreenPX(c), toScreenPY(T_sol(c)));
+      }
+      ctxP.lineTo(toScreenPX(cSolEnd), toScreenPY(tMinP));
+      ctxP.lineTo(toScreenPX(0), toScreenPY(tMinP));
+      ctxP.closePath();
+      ctxP.fill();
+
+      // Grid lines
+      ctxP.strokeStyle = "#f1f5f9";
+      ctxP.lineWidth = 1;
+      for (let t = 1150; t <= 1400; t += 50) {
+        ctxP.beginPath();
+        ctxP.moveTo(padPL, toScreenPY(t)); ctxP.lineTo(wP - padPR, toScreenPY(t));
+        ctxP.stroke();
+        ctxP.fillStyle = "#94a3b8";
+        ctxP.font = "9px sans-serif";
+        ctxP.fillText(t, padPL - 28, toScreenPY(t) + 3);
+      }
+      for (let c = 10; c <= 40; c += 10) {
+        ctxP.beginPath();
+        ctxP.moveTo(toScreenPX(c), padPT); ctxP.lineTo(toScreenPX(c), hP - padPB);
+        ctxP.stroke();
+        ctxP.fillStyle = "#94a3b8";
+        ctxP.font = "9px sans-serif";
+        ctxP.textAlign = "center";
+        ctxP.fillText(c, toScreenPX(c), hP - padPB + 12);
+      }
+      ctxP.textAlign = "left";
+
+      drawYAxisLabel(ctxP, "Temperature T [°C]", 16, hP / 2);
+      ctxP.fillStyle = "#64748b";
+      ctxP.font = "9.5px sans-serif";
+      ctxP.textAlign = "center";
+      ctxP.fillText("Alloy Composition [wt% B]", wP / 2, hP - 3);
+      ctxP.textAlign = "left";
+
+      // Phase labels
+      ctxP.font = "bold 10px sans-serif";
+      ctxP.fillStyle = "#2563eb";
+      ctxP.fillText("Liquid (L)", toScreenPX(26), toScreenPY(1370));
+      ctxP.fillStyle = "#15803d";
+      ctxP.fillText("Solid (α)", toScreenPX(4), toScreenPY(1190));
+      ctxP.fillStyle = "#64748b";
+      ctxP.font = "9.5px sans-serif";
+      ctxP.fillText("L + α", toScreenPX(14), toScreenPY(1280));
+
+      // Draw Liquidus curve (Blue #2563eb)
+      ctxP.strokeStyle = "#2563eb";
+      ctxP.lineWidth = 2.5;
+      ctxP.beginPath();
+      for (let c = 0; c <= cMaxP; c += 1) {
+        const py = toScreenPY(T_liq(c));
+        if (c === 0) ctxP.moveTo(toScreenPX(c), py); else ctxP.lineTo(toScreenPX(c), py);
+      }
+      ctxP.stroke();
+
+      // Draw Solidus curve (Green #16a34a)
+      ctxP.strokeStyle = "#16a34a";
+      ctxP.lineWidth = 2.5;
+      ctxP.beginPath();
+      for (let c = 0; c <= C_sol(tMinP); c += 1) {
+        const py = toScreenPY(T_sol(c));
+        if (c === 0) ctxP.moveTo(toScreenPX(c), py); else ctxP.lineTo(toScreenPX(c), py);
+      }
+      ctxP.stroke();
+
+      // Nominal composition line C0 wt%
+      ctxP.strokeStyle = "#64748b";
+      ctxP.lineWidth = 1.2;
+      ctxP.setLineDash([3, 3]);
+      ctxP.beginPath();
+      ctxP.moveTo(toScreenPX(C0), toScreenPY(tMaxP - 10));
+      ctxP.lineTo(toScreenPX(C0), toScreenPY(tMinP));
+      ctxP.stroke();
+      ctxP.setLineDash([]);
+      ctxP.fillStyle = "#475569";
+      ctxP.font = "bold 9px sans-serif";
+      ctxP.fillText(`C₀ = ${C0.toFixed(0)}%`, toScreenPX(C0) + 3, padPT + 10);
+
+      // 1. Faint guide for full non-equilibrium effective solidus curve (when cooled fast)
+      if (eta < 0.95) {
+        ctxP.strokeStyle = "rgba(217, 119, 6, 0.32)";
+        ctxP.lineWidth = 1.4;
+        ctxP.setLineDash([2, 3]);
+        ctxP.beginPath();
+        const nFull = 60;
+        for (let i = 1; i <= nFull; i++) {
+          const f_eval = (i / nFull) * 0.90;
+          const cl_scheil = C0 * Math.pow(1.0 - f_eval, k - 1.0);
+          const cs_bar_scheil = (C0 - (1.0 - f_eval) * cl_scheil) / f_eval;
+          const cl_eq = C0 / (1.0 - (1.0 - k) * f_eval);
+          const cs_bar_eq = k * cl_eq;
+          const cs_bar_full = (1.0 - eta) * cs_bar_scheil + eta * cs_bar_eq;
+          const cl_full = (1.0 - eta) * cl_scheil + eta * cl_eq;
+          const t_full = T_liq(cl_full);
+          const px = toScreenPX(cs_bar_full);
+          const py = toScreenPY(t_full);
+          if (i === 1) ctxP.moveTo(px, py); else ctxP.lineTo(px, py);
+        }
+        ctxP.stroke();
+        ctxP.setLineDash([]);
+      }
+
+      // 2. Dynamic trace of Average Solid Concentration C̄s(T) up to current fs (Dashed amber trail)
+      // When cooled slowly (eta -> 1): C̄s traces Equilibrium Solidus directly!
+      // When cooled fast (eta -> 0): C̄s shifts left, tracing Effective Non-Equilibrium Solidus!
+      if (fs > 0.01) {
+        ctxP.strokeStyle = "#d97706";
+        ctxP.lineWidth = 2.4;
+        ctxP.setLineDash([3, 2]);
+        ctxP.beginPath();
+        const nTrace = 60;
+        for (let i = 0; i <= nTrace; i++) {
+          const traceFs = (i / nTrace) * fs;
+          let traceCs_bar, traceCl;
+          if (traceFs < 0.005) {
+            traceCs_bar = k * C0;
+            traceCl = C0;
+          } else {
+            const traceCl_scheil = C0 * Math.pow(1.0 - Math.min(0.92, traceFs), k - 1.0);
+            const traceCs_bar_scheil = (C0 - (1.0 - traceFs) * traceCl_scheil) / traceFs;
+            const traceCl_eq = C0 / (1.0 - (1.0 - k) * traceFs);
+            const traceCs_bar_eq = k * traceCl_eq;
+            traceCs_bar = (1.0 - eta) * traceCs_bar_scheil + eta * traceCs_bar_eq;
+            traceCl = (1.0 - eta) * traceCl_scheil + eta * traceCl_eq;
+          }
+          const traceT = T_liq(traceCl);
+          const px = toScreenPX(traceCs_bar);
+          const py = toScreenPY(traceT);
+          if (i === 0) ctxP.moveTo(px, py); else ctxP.lineTo(px, py);
+        }
+        ctxP.stroke();
+        ctxP.setLineDash([]);
+      }
+
+      // 3. Active Dynamic Tie Line at T_curr
+      const yTie = toScreenPY(T_curr);
+      const xTieSolid = toScreenPX(cS_star);
+      const xTieLiq = toScreenPX(cL_star);
+      const xTieAvg = toScreenPX(cS_bar);
+
+      // Tie line segment spanning between solid/average and liquid
+      ctxP.strokeStyle = "#0f172a";
+      ctxP.lineWidth = 2.0;
+      ctxP.beginPath();
+      const xTieLeft = Math.min(xTieSolid, xTieAvg);
+      ctxP.moveTo(xTieLeft, yTie); ctxP.lineTo(xTieLiq, yTie);
+      ctxP.stroke();
+
+      // Liquidus point (Blue circle) at (cL_star, T_curr)
+      ctxP.fillStyle = "#2563eb";
+      ctxP.beginPath(); ctxP.arc(xTieLiq, yTie, 5, 0, 2*Math.PI); ctxP.fill();
+      ctxP.strokeStyle = "#0f172a"; ctxP.lineWidth = 1.2; ctxP.stroke();
+
+      // Solidus interface point (Green circle) at (cS_star, T_curr)
+      ctxP.fillStyle = "#16a34a";
+      ctxP.beginPath(); ctxP.arc(xTieSolid, yTie, 5, 0, 2*Math.PI); ctxP.fill();
+      ctxP.strokeStyle = "#0f172a"; ctxP.lineWidth = 1.2; ctxP.stroke();
+
+      // Average Solid Composition point (Amber diamond) at (cS_bar, T_curr)
+      if (eta < 0.90) {
+        ctxP.fillStyle = "#d97706";
+        ctxP.strokeStyle = "#0f172a";
+        ctxP.lineWidth = 1.2;
+        ctxP.beginPath();
+        const dSize = 5;
+        ctxP.moveTo(xTieAvg, yTie - dSize);
+        ctxP.lineTo(xTieAvg + dSize, yTie);
+        ctxP.lineTo(xTieAvg, yTie + dSize);
+        ctxP.lineTo(xTieAvg - dSize, yTie);
+        ctxP.closePath();
+        ctxP.fill();
+        ctxP.stroke();
+      }
+
+      // Non-overlapping labels on tie line points with real mathematical subscripts
+      // 1. CL* (Blue) - to the right of the blue circle
+      ctxP.fillStyle = "#2563eb";
+      ctxP.font = "bold 9px sans-serif";
+      ctxP.textAlign = "left";
+      drawSub(ctxP, "C", "L", `* = ${cL_star.toFixed(1)}%`, xTieLiq + 6, yTie + 3);
+
+      // 2. CS* (Green) - placed ABOVE the tie line
+      ctxP.fillStyle = "#15803d";
+      ctxP.font = "bold 9px sans-serif";
+      if (eta >= 0.85) {
+        // Slow cooling: interface and average coincide directly on solidus
+        drawSub(ctxP, "C", "S", `* = ${cS_star.toFixed(1)}% (Equil)`, xTieSolid - 38, yTie - 7);
+      } else {
+        // Fast cooling: interface point
+        drawSub(ctxP, "C", "S", `* = ${cS_star.toFixed(1)}% (interface)`, xTieSolid - 38, yTie - 7);
+
+        // 3. C̄s (Amber Diamond) - placed BELOW the tie line
+        ctxP.fillStyle = "#b45309";
+        drawSub(ctxP, "C̄", "S", ` = ${cS_bar.toFixed(1)}% (Avg)`, xTieAvg - 28, yTie + 14);
+      }
+      ctxP.textAlign = "left";
+
+      // Mini-legend card in top right (compact single-row pill)
+      ctxP.fillStyle = "rgba(255, 255, 255, 0.92)";
+      ctxP.strokeStyle = "#cbd5e1";
+      ctxP.lineWidth = 1;
+      ctxP.beginPath();
+      ctxP.roundRect(wP - padPR - 170, padPT + 2, 170, 20, 3);
+      ctxP.fill();
+      ctxP.stroke();
+
+      // Legend Green: Solidus
+      ctxP.strokeStyle = "#16a34a";
+      ctxP.lineWidth = 2.0;
+      ctxP.beginPath();
+      ctxP.moveTo(wP - padPR - 163, padPT + 12); ctxP.lineTo(wP - padPR - 147, padPT + 12);
+      ctxP.stroke();
+      ctxP.fillStyle = "#15803d";
+      ctxP.font = "bold 8px sans-serif";
+      ctxP.fillText("Solidus", wP - padPR - 143, padPT + 15);
+
+      // Legend Amber: Effective Solidus / C̄S Path
+      ctxP.strokeStyle = "#d97706";
+      ctxP.lineWidth = 2.0;
+      ctxP.setLineDash([3, 2]);
+      ctxP.beginPath();
+      ctxP.moveTo(wP - padPR - 102, padPT + 12); ctxP.lineTo(wP - padPR - 86, padPT + 12);
+      ctxP.stroke();
+      ctxP.setLineDash([]);
+      ctxP.fillStyle = "#b45309";
+      ctxP.font = "bold 8px sans-serif";
+      drawSub(ctxP, "Avg C̄", "S", " Path", wP - padPR - 82, padPT + 15);
+
+      // Title & Live Readout Header
+      ctxP.fillStyle = "#0f172a";
+      ctxP.font = "bold 10.5px sans-serif";
+      ctxP.fillText("Isomorphous Phase Diagram (Live Tie-Line)", padPL, 15);
+
+      const modeTitle = eta > 0.75 ? "Lever Rule" : (eta < 0.25 ? "Scheil" : "Partial");
+      ctxP.fillStyle = "#d97706";
+      ctxP.font = "bold 9.5px sans-serif";
+      const titleSubBase = `T = ${T_curr.toFixed(0)}°C (${modeTitle}, f`;
+      const titleSubPost = ` = ${fsPctStr})`;
+      const twHeader = measureSub(ctxP, titleSubBase, "S", titleSubPost);
+      drawSub(ctxP, titleSubBase, "S", titleSubPost, wP - padPR - twHeader, 15);
+
+
+      // =======================================================================
+      // 2. BOTTOM-LEFT PANEL: 1D RADIAL CONCENTRATION PROFILE C(r)
+      // =======================================================================
+      const pad1L = 55, pad1R = 20, pad1T = 24, pad1B = 25;
+      const rMaxPlot = 120.0; // r from 0 to 120 μm (grain max radius = 100 μm)
+      const cMax1D = 42.0;    // wt% B
+      const cMin1D = 0.0;
+
+      const toScreen1X = (r) => pad1L + (r / rMaxPlot) * (w1 - pad1L - pad1R);
+      const toScreen1Y = (c) => pad1T + ((cMax1D - c) / (cMax1D - cMin1D)) * (h1 - pad1T - pad1B);
+
+      // Background fill
+      ctx1.fillStyle = "#ffffff";
+      ctx1.fillRect(0, 0, w1, h1);
+
+      // Phase Zone Background Shading
+      // Solid zone: from r = 0 to r = xInt
+      const xIntScreen = toScreen1X(xInt);
+      ctx1.fillStyle = "rgba(16, 185, 129, 0.06)";
+      ctx1.fillRect(pad1L, pad1T, Math.max(0, xIntScreen - pad1L), h1 - pad1T - pad1B);
+
+      // Liquid zone: from r = xInt to r = rMaxPlot
+      ctx1.fillStyle = "rgba(59, 130, 246, 0.06)";
+      ctx1.fillRect(xIntScreen, pad1T, Math.max(0, (w1 - pad1R) - xIntScreen), h1 - pad1T - pad1B);
+
+      // Grid lines
+      ctx1.strokeStyle = "#f1f5f9";
+      ctx1.lineWidth = 1;
+      for (let c = 10; c <= 40; c += 10) {
+        ctx1.beginPath();
+        ctx1.moveTo(pad1L, toScreen1Y(c)); ctx1.lineTo(w1 - pad1R, toScreen1Y(c));
+        ctx1.stroke();
+        ctx1.fillStyle = "#94a3b8";
+        ctx1.font = "9px sans-serif";
+        ctx1.fillText(c, pad1L - 24, toScreen1Y(c) + 3);
+      }
+      for (let r = 20; r <= 100; r += 20) {
+        ctx1.beginPath();
+        ctx1.moveTo(toScreen1X(r), pad1T); ctx1.lineTo(toScreen1X(r), h1 - pad1B);
+        ctx1.stroke();
+        ctx1.fillStyle = "#94a3b8";
+        ctx1.font = "9px sans-serif";
+        ctx1.textAlign = "center";
+        ctx1.fillText(r, toScreen1X(r), h1 - pad1B + 12);
+      }
+      ctx1.textAlign = "left";
+
+      // Axis labels
+      drawYAxisLabel(ctx1, "Concentration C [wt% B]", 16, h1 / 2);
+      ctx1.fillStyle = "#64748b";
+      ctx1.font = "9.5px sans-serif";
+      ctx1.textAlign = "center";
+      ctx1.fillText("Radial Distance from Core r [μm]", w1 / 2, h1 - 3);
+      ctx1.textAlign = "left";
+
+      // Nominal composition baseline C0
+      ctx1.strokeStyle = "#94a3b8";
+      ctx1.lineWidth = 1.2;
+      ctx1.setLineDash([3, 3]);
+      ctx1.beginPath();
+      ctx1.moveTo(pad1L, toScreen1Y(C0)); ctx1.lineTo(w1 - pad1R, toScreen1Y(C0));
+      ctx1.stroke();
+      ctx1.setLineDash([]);
+      ctx1.fillStyle = "#64748b";
+      ctx1.font = "bold 8.5px sans-serif";
+      ctx1.fillText(`C₀ = ${C0.toFixed(0)} wt%`, w1 - pad1R - 70, toScreen1Y(C0) - 4);
+
+      // Solid concentration curve CS(r)
+      if (xInt > 0.5) {
+        ctx1.strokeStyle = "#16a34a";
+        ctx1.lineWidth = 2.5;
+        ctx1.beginPath();
+        const nS = 80;
+        for (let i = 0; i <= nS; i++) {
+          const currFs = (i / nS) * fs;
+          const rPos = currFs * Rmax;
+          let csVal;
+          if (currFs < 0.005) {
+            csVal = (1.0 - eta) * (k * C0) + eta * cS_eq;
+          } else {
+            const csScheil = k * C0 * Math.pow(1.0 - Math.min(0.92, currFs), k - 1.0);
+            csVal = (1.0 - eta) * csScheil + eta * cS_eq;
+          }
+          const px = toScreen1X(rPos);
+          const py = toScreen1Y(csVal);
+          if (i === 0) ctx1.moveTo(px, py); else ctx1.lineTo(px, py);
+        }
+        ctx1.stroke();
+
+        // Average solid composition line C̄S (dashed amber line across solid region)
+        if (eta < 0.90 && fs > 0.02) {
+          ctx1.strokeStyle = "#d97706";
+          ctx1.lineWidth = 1.6;
+          ctx1.setLineDash([3, 2]);
+          ctx1.beginPath();
+          ctx1.moveTo(pad1L, toScreen1Y(cS_bar));
+          ctx1.lineTo(xIntScreen, toScreen1Y(cS_bar));
+          ctx1.stroke();
+          ctx1.setLineDash([]);
+
+          ctx1.fillStyle = "#b45309";
+          ctx1.font = "bold 8.5px sans-serif";
+          drawSub(ctx1, "C̄", "S", ` = ${cS_bar.toFixed(1)}%`, pad1L + 6, toScreen1Y(cS_bar) - 4);
+        }
+
+        // Interface partition jump (dotted vertical line connecting CS* and CL*)
+        ctx1.strokeStyle = "#0f172a";
+        ctx1.lineWidth = 1.5;
+        ctx1.setLineDash([2, 2]);
+        ctx1.beginPath();
+        ctx1.moveTo(xIntScreen, toScreen1Y(cS_star));
+        ctx1.lineTo(xIntScreen, toScreen1Y(cL_star));
+        ctx1.stroke();
+        ctx1.setLineDash([]);
+
+        // Solid interface marker: Green circle at (xInt, cS_star)
+        ctx1.fillStyle = "#16a34a";
+        ctx1.beginPath(); ctx1.arc(xIntScreen, toScreen1Y(cS_star), 4, 0, 2 * Math.PI); ctx1.fill();
+        ctx1.strokeStyle = "#0f172a"; ctx1.lineWidth = 1; ctx1.stroke();
+
+        // Liquid interface marker: Blue circle at (xInt, cL_star)
+        ctx1.fillStyle = "#2563eb";
+        ctx1.beginPath(); ctx1.arc(xIntScreen, toScreen1Y(cL_star), 4, 0, 2 * Math.PI); ctx1.fill();
+        ctx1.strokeStyle = "#0f172a"; ctx1.lineWidth = 1; ctx1.stroke();
+
+        // Partition ratio label k = 0.40 next to the vertical jump
+        const midY = (toScreen1Y(cS_star) + toScreen1Y(cL_star)) / 2;
+        ctx1.fillStyle = "#475569";
+        ctx1.font = "bold 8px sans-serif";
+        ctx1.fillText(`k = ${(k).toFixed(2)}`, xIntScreen + 5, midY + 3);
+      }
+
+      // Liquid Melt Profile (Well-Mixed, complete liquid diffusion per Scheil assumption)
+      ctx1.strokeStyle = "#2563eb";
+      ctx1.lineWidth = 2.2;
+      ctx1.beginPath();
+      ctx1.moveTo(xIntScreen, toScreen1Y(cL_star));
+      ctx1.lineTo(w1 - pad1R, toScreen1Y(cL_star));
+      ctx1.stroke();
+
+      // Liquid Melt label
+      ctx1.fillStyle = "#2563eb";
+      ctx1.font = "bold 8.5px sans-serif";
+      ctx1.fillText(`Liquid Melt: ${cL_star.toFixed(1)} wt%`, Math.max(xIntScreen + 10, w1 - pad1R - 120), toScreen1Y(cL_star) - 5);
+
+      // Title & Live Status
+      ctx1.fillStyle = "#0f172a";
+      ctx1.font = "bold 10px sans-serif";
+      ctx1.fillText("1D Radial Concentration Profile C(r)", pad1L, 14);
+
+      // Header readout
+      ctx1.font = "bold 9px sans-serif";
+      ctx1.fillStyle = eta > 0.75 ? "#15803d" : "#b45309";
+      const profDesc = eta > 0.75 ? "Equilibrium: Solid Homogenized (Flat)" : `Scheil Coring: Core ${((1.0 - eta) * k * C0 + eta * cS_eq).toFixed(1)}% → Rim ${cS_star.toFixed(1)}%`;
+      ctx1.textAlign = "right";
+      ctx1.fillText(profDesc, w1 - pad1R, 14);
+      ctx1.textAlign = "left";
+
+
+      // =======================================================================
+      // 3. RIGHT PANEL: 2D GRAIN WITH CONTROLLABLE CORING GRADIENT
+      // =======================================================================
+      ctx2.fillStyle = "#ffffff";
+      ctx2.fillRect(0, 0, w2, h2);
+
+      drawYAxisLabel(ctx2, "Grain Radius r [μm]", 12, h2 / 2);
+
+      const centerX = w2 * 0.50;
+      const centerY = h2 * 0.49;
+      // Responsive grain scale: guarantees the grain NEVER exceeds canvas bounds or collides with headers/footers
+      const maxAllowedR = Math.min(w2 * 0.38, h2 * 0.33);
+      const grainScale = maxAllowedR / 100.0;
+      const curR = xInt * grainScale;
+
+      // 1. Draw Liquid Melt background - soft sky blue (#eff6ff) within clean padded box
+      const meltPadX = 24;
+      const meltTop = 38;
+      const meltBottom = h2 - 32;
+      ctx2.fillStyle = "#eff6ff";
+      ctx2.fillRect(meltPadX, meltTop, w2 - meltPadX - 12, meltBottom - meltTop);
+      ctx2.strokeStyle = "#bfdbfe";
+      ctx2.lineWidth = 1.2;
+      ctx2.strokeRect(meltPadX, meltTop, w2 - meltPadX - 12, meltBottom - meltTop);
+
+      // 2. Controllable Radial Gradient for Solid Nucleus
+      // When eta -> 1 (Equilibrium): all radial stops are identical -> UNIFORM GREEN DISC (NO GRADIENT)
+      // When eta -> 0 (Scheil): full perceptual ramp from Mint -> Emerald -> Lime -> Yellow -> Crimson (STEEP GRADIENT)
+      if (curR > 1) {
+        const radGrad = ctx2.createRadialGradient(centerX, centerY, 0, centerX, centerY, curR);
+        const nStops = 28;
+        const cMinGrain = k * C0;
+        const cMaxGrain = Math.max(cMinGrain + 1.0, Math.max(cS_star, C0 * 1.8));
+
+        for (let s = 0; s <= nStops; s++) {
+          const u = s / nStops; // 0 (center) to 1 (rim)
+          const ringFs = u * fs;
+          const cRing_scheil = k * C0 * Math.pow(1.0 - Math.min(0.92, ringFs), k - 1.0);
+          const cRing = (1.0 - eta) * cRing_scheil + eta * cS_eq;
+
+          const norm = Math.max(0, Math.min(1.0, (cRing - cMinGrain) / (cMaxGrain - cMinGrain)));
+
+          let r, g, b;
+          if (norm < 0.28) {
+            // Fresh Bright Mint rgb(167, 243, 208) to Emerald Green rgb(22, 163, 74)
+            const f = norm / 0.28;
+            r = Math.round(167 + f * (22 - 167));
+            g = Math.round(243 + f * (163 - 243));
+            b = Math.round(208 + f * (74 - 208));
+          } else if (norm < 0.55) {
+            // Emerald Green rgb(22, 163, 74) to Vibrant Lime rgb(163, 230, 53)
+            const f = (norm - 0.28) / 0.27;
+            r = Math.round(22 + f * (163 - 22));
+            g = Math.round(163 + f * (230 - 163));
+            b = Math.round(74 + f * (53 - 74));
+          } else if (norm < 0.78) {
+            // Lime rgb(163, 230, 53) to Golden Yellow rgb(234, 179, 8)
+            const f = (norm - 0.55) / 0.23;
+            r = Math.round(163 + f * (234 - 163));
+            g = Math.round(230 + f * (179 - 230));
+            b = Math.round(53 + f * (8 - 53));
+          } else if (norm < 0.92) {
+            // Golden Yellow rgb(234, 179, 8) to Warm Orange rgb(249, 115, 22)
+            const f = (norm - 0.78) / 0.14;
+            r = Math.round(234 + f * (249 - 234));
+            g = Math.round(179 + f * (115 - 179));
+            b = Math.round(8 + f * (22 - 8));
+          } else {
+            // Extreme Rim: Orange rgb(249, 115, 22) to Deep Crimson rgb(220, 38, 38)
+            const f = (norm - 0.92) / 0.08;
+            r = Math.round(249 + f * (220 - 249));
+            g = Math.round(115 + f * (38 - 115));
+            b = Math.round(22 + f * (38 - 22));
+          }
+
+          radGrad.addColorStop(u, `rgb(${r}, ${g}, ${b})`);
+        }
+
+        ctx2.fillStyle = radGrad;
+        ctx2.beginPath();
+        ctx2.arc(centerX, centerY, curR, 0, 2 * Math.PI);
+        ctx2.fill();
+
+        // 3. Concentric Onion-Ring Growth Contours (only visible when coring is present)
+        if (eta < 0.75) {
+          ctx2.save();
+          ctx2.globalAlpha = Math.max(0.06, (1.0 - eta) * 0.40);
+          const nRings = 5;
+          for (let ri = 1; ri < nRings; ri++) {
+            const rFrac = ri / nRings;
+            const ringRad = curR * rFrac;
+            ctx2.strokeStyle = "#0f172a";
+            ctx2.lineWidth = 0.9;
+            ctx2.setLineDash([2, 3]);
+            ctx2.beginPath();
+            ctx2.arc(centerX, centerY, ringRad, 0, 2 * Math.PI);
+            ctx2.stroke();
+          }
+          ctx2.restore();
+        }
+
+        // Sharp Grain Boundary perimeter line
+        ctx2.strokeStyle = "#0f172a";
+        ctx2.lineWidth = 2.2;
+        ctx2.beginPath();
+        ctx2.arc(centerX, centerY, curR, 0, 2 * Math.PI);
+        ctx2.stroke();
+
+        // Core Center Dot & Callouts (Guaranteed ZERO OVERLAP with pill badges)
+        const cCenter = (1.0 - eta) * (k * C0) + eta * cS_eq;
+        const cRim = cS_star;
+
+        ctx2.fillStyle = "#0f172a";
+        ctx2.beginPath(); ctx2.arc(centerX, centerY, 3, 0, 2*Math.PI); ctx2.fill();
+
+        if (curR < 25) {
+          // Small nucleus: single clean pill badge below nucleus
+          const nucTxt = `Nucleus (${cCenter.toFixed(1)} wt% B)`;
+          ctx2.font = "bold 9px sans-serif";
+          const tw = ctx2.measureText(nucTxt).width;
+          const py = centerY + curR + 14;
+          ctx2.fillStyle = "rgba(255, 255, 255, 0.92)";
+          ctx2.strokeStyle = "#cbd5e1";
+          ctx2.lineWidth = 1;
+          ctx2.beginPath(); ctx2.roundRect(centerX - tw/2 - 5, py - 10, tw + 10, 15, 3); ctx2.fill(); ctx2.stroke();
+          ctx2.fillStyle = "#15803d";
+          ctx2.textAlign = "center";
+          ctx2.fillText(nucTxt, centerX, py + 1);
+          ctx2.textAlign = "left";
+        } else {
+          // Developed grain:
+          if (eta > 0.75) {
+            // Uniform grain (Lever Rule) - single pill badge below grain
+            const unifTxt = `Uniform Solid: ${cCenter.toFixed(1)} wt% B`;
+            ctx2.font = "bold 9.5px sans-serif";
+            const tw = ctx2.measureText(unifTxt).width;
+            const py = centerY + curR + 14;
+            ctx2.fillStyle = "rgba(255, 255, 255, 0.92)";
+            ctx2.strokeStyle = "#cbd5e1";
+            ctx2.lineWidth = 1;
+            ctx2.beginPath(); ctx2.roundRect(centerX - tw/2 - 5, py - 10, tw + 10, 15, 3); ctx2.fill(); ctx2.stroke();
+            ctx2.fillStyle = "#15803d";
+            ctx2.textAlign = "center";
+            ctx2.fillText(unifTxt, centerX, py + 1);
+            ctx2.textAlign = "left";
+          } else {
+            // Coring active:
+            // Core badge at center
+            ctx2.font = "bold 9px sans-serif";
+            const coreTxt = `Core: ${cCenter.toFixed(1)}% (kC₀)`;
+            const twCore = ctx2.measureText(coreTxt).width;
+            const coreY = centerY - 6;
+            ctx2.fillStyle = "rgba(255, 255, 255, 0.92)";
+            ctx2.strokeStyle = "#cbd5e1";
+            ctx2.lineWidth = 1;
+            ctx2.beginPath(); ctx2.roundRect(centerX - twCore/2 - 4, coreY - 10, twCore + 8, 14, 3); ctx2.fill(); ctx2.stroke();
+            ctx2.fillStyle = "#15803d";
+            ctx2.textAlign = "center";
+            ctx2.fillText(coreTxt, centerX, coreY + 1);
+
+            // Rim badge below bottom edge
+            const rimTxt = `Rim: ${cRim.toFixed(1)} wt% B`;
+            ctx2.font = "bold 9.5px sans-serif";
+            const twRim = ctx2.measureText(rimTxt).width;
+            const rimY = centerY + curR + 14;
+            ctx2.fillStyle = "rgba(255, 255, 255, 0.92)";
+            ctx2.strokeStyle = "#fca5a5";
+            ctx2.lineWidth = 1;
+            ctx2.beginPath(); ctx2.roundRect(centerX - twRim/2 - 5, rimY - 10, twRim + 10, 15, 3); ctx2.fill(); ctx2.stroke();
+            ctx2.fillStyle = "#b91c1c";
+            ctx2.textAlign = "center";
+            ctx2.fillText(rimTxt, centerX, rimY + 1);
+            ctx2.textAlign = "left";
+          }
+        }
+      }
+
+      // Top Header inside canvas (clean non-overlapping layout, centered)
+      ctx2.textAlign = "center";
+      ctx2.fillStyle = "#0f172a";
+      ctx2.font = "bold 11px sans-serif";
+      ctx2.fillText("2D Grain Solidification Profile", centerX, 18);
+
+      ctx2.font = "9px sans-serif";
+      ctx2.fillStyle = "#2563eb";
+      ctx2.fillText("Liquid Melt Background", centerX, 31);
+
+      // Footer Notes (centered 2-line layout, guaranteed ZERO collision)
+      ctx2.textAlign = "center";
+      ctx2.font = "bold 9.5px sans-serif";
+      ctx2.fillStyle = eta > 0.5 ? "#15803d" : "#b45309";
+      ctx2.fillText(eta > 0.5 ? "Equilibrium Solidification (Lever Rule)" : "Non-Equilibrium Coring (Scheil-Gulliver)", centerX, h2 - 18);
+
+      ctx2.font = "9px sans-serif";
+      ctx2.fillStyle = "#64748b";
+      if (eta > 0.5) {
+        const footW = measureSub(ctx2, "Solid diffusion D", "S", " active → complete homogenization");
+        drawSub(ctx2, "Solid diffusion D", "S", " active → complete homogenization", centerX - footW / 2, h2 - 6);
+      } else {
+        const footW = measureSub(ctx2, "Dashed rings = frozen Scheil shells (D", "S", " ≈ 0)");
+        drawSub(ctx2, "Dashed rings = frozen Scheil shells (D", "S", " ≈ 0)", centerX - footW / 2, h2 - 6);
+      }
+      ctx2.textAlign = "left";
+    }
+
+    // Animation Loop
+    function animate() {
+      try {
+        if (currentTab === 1) renderTab1();
+        else if (currentTab === 2) renderTab2();
+        else if (currentTab === 3) renderTab3();
+        else if (currentTab === 4) renderTab4();
+      } catch (err) {
+        console.error("Simulation render error in tab", currentTab, err);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Launch
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
