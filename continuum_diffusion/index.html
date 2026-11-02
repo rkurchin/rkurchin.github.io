@@ -47,6 +47,9 @@
         <button onclick="switchTab(4)" id="tabBtn4" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
           4. Phase Diagram & Coring
         </button>
+        <button onclick="switchTab(5)" id="tabBtn5" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
+          5. Spinodal / Uphill
+        </button>
       </nav>
     </header>
 
@@ -503,6 +506,158 @@
       </div>
     </div>
 
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: SPINODAL DECOMPOSITION & UPHILL DIFFUSION -->
+    <!-- ========================================================================= -->
+    <div id="tabContent5" class="tab-content hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-1 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm space-y-3.5">
+          <div>
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#C41230]">Design 5 Controls</h3>
+            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Thermodynamic Instability &amp; Uphill Diffusion</p>
+          </div>
+
+          <!-- Play / Reset / Perturb -->
+          <div class="flex items-center gap-2">
+            <button id="t5PlayBtn" onclick="togglePlay(5)" class="flex-1 py-1.5 px-3 bg-[#C41230] hover:bg-[#a00f27] text-white rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-sm">
+              <span id="t5PlayIcon">⏸ Pause</span>
+            </button>
+            <button onclick="resetSim(5)" class="py-1.5 px-2.5 bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#e2e8f0)] text-[var(--foreground,#0f172a)] rounded-lg text-xs font-semibold transition border border-[var(--border,#cbd5e1)]">
+              ↺ Reset
+            </button>
+            <button onclick="perturbSim5()" class="py-1.5 px-2.5 bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#e2e8f0)] text-[var(--foreground,#0f172a)] rounded-lg text-xs font-semibold transition border border-[var(--border,#cbd5e1)]" title="Add random compositional fluctuations">
+              ⚡ Perturb
+            </button>
+          </div>
+
+          <!-- Reduced Temperature T / Tc Slider -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Reduced Temp (T / T<sub>c</sub>)</span>
+              <span id="t5ThetaVal" class="font-mono text-[#C41230]">0.70 T<sub>c</sub></span>
+            </div>
+            <input type="range" id="t5ThetaSlider" min="0.40" max="1.20" step="0.02" value="0.70" class="w-full cursor-pointer" oninput="updateT5Theta(this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>0.40 (Deep Quench)</span>
+              <span>1.0 (Critical)</span>
+              <span>1.20 (Single Phase)</span>
+            </div>
+          </div>
+
+          <!-- Alloy Composition x0 Slider with Dynamic Diffusion Regime Badge -->
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Alloy Composition (x₀)</span>
+              <span id="t5X0Val" class="font-mono text-[#2563EB]">0.50 x<sub>B</sub></span>
+            </div>
+            <input type="range" id="t5X0Slider" min="0.04" max="0.96" step="0.01" value="0.50" class="w-full cursor-pointer" oninput="updateT5X0(this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>0.04 (Single Phase)</span>
+              <span>0.50</span>
+              <span>0.96 (Single Phase)</span>
+            </div>
+            <!-- Dynamic Regime Indicator Badge (changes color by spinodal threshold) -->
+            <div id="t5DiffMode" class="text-[11px] font-semibold text-[#dc2626] transition-colors pt-0.5">
+              ⚡ Uphill Diffusion: Spinodal Instability (D̃ &lt; 0)
+            </div>
+          </div>
+
+          <!-- Simulation Speed & End-State Acceleration -->
+          <div class="space-y-1.5">
+            <div class="flex justify-between text-xs font-semibold">
+              <span>Simulation Speed</span>
+              <span id="t5SpeedVal" class="font-mono text-[#C41230]">1× (Real-time)</span>
+            </div>
+            <input type="range" id="t5SpeedSlider" min="1" max="25" step="1" value="1" class="w-full cursor-pointer" oninput="updateT5Speed(this.value)">
+            <div class="flex items-center gap-1.5 pt-0.5">
+              <button type="button" onclick="setT5Speed(1)" class="flex-1 py-1 px-1.5 text-[10px] font-semibold rounded bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#cbd5e1)] text-[var(--foreground,#0f172a)] border border-[var(--border,#cbd5e1)] transition">1×</button>
+              <button type="button" onclick="setT5Speed(5)" class="flex-1 py-1 px-1.5 text-[10px] font-semibold rounded bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#cbd5e1)] text-[var(--foreground,#0f172a)] border border-[var(--border,#cbd5e1)] transition">5×</button>
+              <button type="button" onclick="setT5Speed(15)" class="flex-1 py-1 px-1.5 text-[10px] font-semibold rounded bg-[var(--muted,#f1f5f9)] hover:bg-[var(--border,#cbd5e1)] text-[var(--foreground,#0f172a)] border border-[var(--border,#cbd5e1)] transition">15×</button>
+              <button type="button" onclick="setT5Speed(25)" class="flex-1 py-1 px-1.5 text-[10px] font-bold rounded bg-red-50 hover:bg-red-100 text-[#C41230] border border-red-300 transition" title="Fast-forward to late-stage coarsened equilibrium">25× End-State</button>
+            </div>
+          </div>
+
+          <!-- Metrics Badge -->
+          <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] space-y-1.5 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Thermodynamic State:</span>
+              <span id="t5RegimeReadout" class="font-mono font-bold text-[#DC2626]">Unstable (Spinodal)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Curvature ∂²g/∂x²:</span>
+              <span id="t5D2GReadout" class="font-mono font-bold text-[#DC2626]">-1.20 RT<sub>c</sub></span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Effective Diffusivity D̃:</span>
+              <span id="t5DiffReadout" class="font-mono font-bold text-[#DC2626]">Negative (&lt; 0, Uphill)</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Spinodal Limits [x<sub>s1</sub>, x<sub>s2</sub>]:</span>
+              <span id="t5SpinodalReadout" class="font-mono font-semibold">[0.23, 0.77]</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-[var(--muted-foreground,#64748b)]">Binodal Solvus [x<sub>b1</sub>, x<sub>b2</sub>]:</span>
+              <span id="t5BinodalReadout" class="font-mono font-semibold">[0.09, 0.91]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Canvas Column -->
+        <div class="lg:col-span-3 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
+          <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#e2e8f0)]">
+            <div>
+              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">Spinodal Decomposition: Thermodynamic Driving Force &amp; Continuum Phase Separation</h2>
+              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Top: Free Energy g(x) &amp; T–x Phase Diagram • Bottom: Independent 1D Profile &amp; 2D Microstructure Simulations</p>
+            </div>
+            <span class="text-xs font-mono px-2 py-0.5 bg-[var(--muted,#f1f5f9)] rounded border border-[var(--border,#e2e8f0)]">
+              Cahn-Hilliard Continuum Model
+            </span>
+          </div>
+
+          <!-- 2x2 Canvas Grid -->
+          <div class="py-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Top-Left: Free Energy Curve g(x) -->
+            <div class="relative w-full" style="height: 195px;">
+              <canvas id="t5CanvasG" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+            <!-- Top-Right: Phase Diagram (T - x) -->
+            <div class="relative w-full" style="height: 195px;">
+              <canvas id="t5CanvasPhase" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+            <!-- Bottom-Left: 1D Composition Profile c(z, t) -->
+            <div class="relative w-full" style="height: 190px;">
+              <canvas id="t5Canvas1D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+            <!-- Bottom-Right: 2D Microstructure Canvas -->
+            <div class="relative w-full" style="height: 190px;">
+              <canvas id="t5Canvas2D" class="w-full h-full block rounded-lg border border-[var(--border,#e2e8f0)] bg-[#ffffff]"></canvas>
+            </div>
+          </div>
+
+          <!-- Explicit Domain Clarification Banner -->
+          <div class="my-1 px-3 py-1.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] flex items-center justify-between text-[11px] text-[var(--muted-foreground,#475569)]">
+            <span><strong class="text-[var(--foreground,#0f172a)]">Domain Clarification:</strong> The 1D composition profile and 2D microstructure are independent representative simulations showing 1D vs. 2D continuum behavior — the 1D profile is not a cross-section of the 2D grid.</span>
+          </div>
+
+          <!-- Explanatory note underneath the plots -->
+          <div class="pt-2 border-t border-[var(--border,#e2e8f0)] text-[11px] text-[var(--muted-foreground,#475569)] leading-relaxed">
+            <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+              <p class="leading-normal">
+                <strong class="text-[var(--foreground,#0f172a)]">Spinodal Decomposition vs. Regular Diffusion:</strong> When an alloy is quenched inside the spinodal region where &part;&sup2;g/&part;x&sup2; &lt; 0, the effective diffusivity flips negative (D̃ = M c &part;&sup2;g/&part;x&sup2; &lt; 0), causing <strong>uphill diffusion</strong> where solute spontaneously concentrates into growing peaks without any nucleation barrier. When composition x₀ is dragged outside the spinodal or temperature is heated above T<sub>c</sub> (&part;&sup2;g/&part;x&sup2; &gt; 0), diffusion reverts to <strong>regular downhill diffusion</strong> (D̃ &gt; 0), smoothing and dissolving any concentration fluctuations into a uniform single phase. Note that the 1D profile and 2D microstructure are solved independently as canonical examples of 1D vs. 2D morphology.
+              </p>
+              <span class="text-[10px] font-semibold text-[var(--foreground,#0f172a)] px-2.5 py-1 bg-white rounded border border-[var(--border,#cbd5e1)] whitespace-nowrap self-start md:self-center shadow-xs">
+                &part;c/&part;t = M&nabla;&sup2;(&part;g/&part;c &minus; &kappa;&nabla;&sup2;c)
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 
   <!-- Vanilla JavaScript Physics Simulation Engine -->
@@ -511,7 +666,7 @@
     let currentTab = 1;
     function switchTab(tabId) {
       currentTab = tabId;
-      for (let i = 1; i <= 4; i++) {
+      for (let i = 1; i <= 5; i++) {
         document.getElementById(`tabContent${i}`).classList.toggle('hidden', i !== tabId);
         document.getElementById(`tabContent${i}`).classList.toggle('block', i === tabId);
         
@@ -590,6 +745,29 @@
       return wBase + wSub + wPost;
     }
 
+    // Compact Header Pill Badge Drawer with collision-free geometry
+    function drawCanvasBadge(ctx, text, color, bgColor, borderColor, rightX, yCenter) {
+      ctx.save();
+      ctx.font = "bold 9px sans-serif";
+      const tw = ctx.measureText(text).width;
+      const bw = tw + 10;
+      const bh = 15;
+      const bx = rightX - bw;
+      const by = yCenter - bh / 2;
+      ctx.fillStyle = bgColor;
+      ctx.strokeStyle = borderColor;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(bx, by, bw, bh, 3);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = color;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(text, bx + bw / 2, yCenter);
+      ctx.restore();
+    }
+
     // Mathematical Error Function (Abramowitz & Stegun 7.1.26 approximation, error < 1.5e-7)
     function mathErf(x) {
       const sign = x >= 0 ? 1 : -1;
@@ -605,7 +783,24 @@
       t1: { playing: true, t: 0.020, D: 1.0, wave: 'multi' },
       t2: { playing: true, t: 0.25, D: 0.5, M: 2.0 },
       t3: { playing: true, t: 0.25, D: 0.25, Cs: 1.0, C0: 0.2 },
-      t4: { playing: true, fs: 0.35, k: 0.40, C0: 10.0, tdotSlider: 70, tdot: 6.3 }
+      t4: { playing: true, fs: 0.35, k: 0.40, C0: 10.0, tdotSlider: 70, tdot: 6.3 },
+      t5: {
+        playing: true,
+        theta: 0.70,
+        x0: 0.50,
+        kappa: 0.80,
+        speed: 1,
+        time: 0,
+        N1: 128,
+        c1: new Float64Array(128),
+        mu1: new Float64Array(128),
+        N2: 50,
+        c2: new Float64Array(50 * 50),
+        mu2: new Float64Array(50 * 50),
+        offCanvas: null,
+        offCtx: null,
+        imgData: null
+      }
     };
 
     function togglePlay(id) {
@@ -620,6 +815,7 @@
       if (id === 2) sim.t2.t = 0.08;
       if (id === 3) sim.t3.t = 0.05;
       if (id === 4) sim.t4.fs = 0.05;
+      if (id === 5) initSim5();
     }
 
     function onTimeInput(id, val) {
@@ -694,6 +890,204 @@
     function changeWave(val) {
       sim.t1.wave = val;
       sim.t1.t = 0.005;
+    }
+
+    // =========================================================================
+    // TAB 5 HELPERS: THERMODYNAMICS & CAHN-HILLIARD SOLVER
+    // =========================================================================
+    function getBinodal(theta) {
+      if (theta >= 0.999) return [0.5, 0.5];
+      let x = 0.5 * (1 - Math.sqrt(Math.max(0, 1 - theta))) * 0.7;
+      for (let iter = 0; iter < 12; iter++) {
+        const f = theta * Math.log((1 - x) / x) - 2 * (1 - 2 * x);
+        const df = -theta / (x * (1 - x)) + 4;
+        const dx = f / df;
+        x = Math.max(0.001, Math.min(0.499, x - dx));
+        if (Math.abs(dx) < 1e-6) break;
+      }
+      return [x, 1 - x];
+    }
+
+    function freeEnergy(x, theta) {
+      x = Math.max(0.0001, Math.min(0.9999, x));
+      return 2 * x * (1 - x) + theta * (x * Math.log(x) + (1 - x) * Math.log(1 - x));
+    }
+
+    function dGdx(x, theta) {
+      x = Math.max(0.0001, Math.min(0.9999, x));
+      return 2 * (1 - 2 * x) + theta * Math.log(x / (1 - x));
+    }
+
+    function d2Gdx2(x, theta) {
+      x = Math.max(0.001, Math.min(0.999, x));
+      return -4 + theta / (x * (1 - x));
+    }
+
+    function initSim5() {
+      const N1 = sim.t5.N1;
+      const x0 = sim.t5.x0;
+      for (let i = 0; i < N1; i++) {
+        sim.t5.c1[i] = x0 + 0.035 * (Math.sin(2 * Math.PI * i / 16) + 0.5 * Math.sin(6 * Math.PI * i / 16));
+        sim.t5.c1[i] = Math.max(0.005, Math.min(0.995, sim.t5.c1[i]));
+      }
+      const N2 = sim.t5.N2;
+      for (let y = 0; y < N2; y++) {
+        for (let x = 0; x < N2; x++) {
+          const idx = y * N2 + x;
+          // Smooth multi-wavelength perturbation (eliminates high-frequency grid-scale checkerboarding)
+          const pert = 0.035 * (
+            Math.sin(2 * Math.PI * x / 12.5) * Math.cos(2 * Math.PI * y / 12.5) +
+            0.5 * Math.sin(4 * Math.PI * x / 12.5 + 1.2) * Math.cos(4 * Math.PI * y / 12.5 + 0.8) +
+            0.25 * Math.sin(2 * Math.PI * (x + y) / 10)
+          );
+          sim.t5.c2[idx] = Math.max(0.005, Math.min(0.995, x0 + pert));
+        }
+      }
+      sim.t5.time = 0;
+    }
+
+    function perturbSim5() {
+      const N1 = sim.t5.N1;
+      for (let i = 0; i < N1; i++) {
+        sim.t5.c1[i] += (Math.random() - 0.5) * 0.06;
+        sim.t5.c1[i] = Math.max(0.005, Math.min(0.995, sim.t5.c1[i]));
+      }
+      const N2 = sim.t5.N2;
+      // Smooth physical perturbation modes (zero point-scale checkerboard noise)
+      const kx = 1 + Math.floor(Math.random() * 3);
+      const ky = 1 + Math.floor(Math.random() * 3);
+      const ph1 = Math.random() * 6.28;
+      const ph2 = Math.random() * 6.28;
+      for (let y = 0; y < N2; y++) {
+        for (let x = 0; x < N2; x++) {
+          const idx = y * N2 + x;
+          const p = 0.05 * Math.sin(2 * Math.PI * kx * x / N2 + ph1) * Math.cos(2 * Math.PI * ky * y / N2 + ph2);
+          sim.t5.c2[idx] = Math.max(0.005, Math.min(0.995, sim.t5.c2[idx] + p));
+        }
+      }
+    }
+
+    function updateT5Theta(val) {
+      sim.t5.theta = parseFloat(val);
+      const el = document.getElementById('t5ThetaVal');
+      if (el) el.textContent = `${sim.t5.theta.toFixed(2)} Tc`;
+    }
+
+    function updateT5X0(val) {
+      const oldX0 = sim.t5.x0;
+      sim.t5.x0 = parseFloat(val);
+      const diff = sim.t5.x0 - oldX0;
+      const el = document.getElementById('t5X0Val');
+      if (el) el.textContent = `${sim.t5.x0.toFixed(2)} xB`;
+
+      const theta = sim.t5.theta;
+      const inSpinodal = theta < 1.0;
+      const xs1 = inSpinodal ? 0.5 * (1 - Math.sqrt(1 - theta)) : 0.5;
+      const xs2 = inSpinodal ? 0.5 * (1 + Math.sqrt(1 - theta)) : 0.5;
+      const isOutside = !inSpinodal || sim.t5.x0 < xs1 || sim.t5.x0 > xs2;
+
+      // If outside spinodal and existing profile was heavily unmixed,
+      // re-seed fresh small perturbations around the new x0 so downhill smoothing is immediately apparent
+      let maxAmp = 0;
+      for (let i = 0; i < sim.t5.N1; i++) {
+        const dev = Math.abs(sim.t5.c1[i] - oldX0);
+        if (dev > maxAmp) maxAmp = dev;
+      }
+      if (isOutside && maxAmp > 0.12) {
+        initSim5();
+        return;
+      }
+
+      const N1 = sim.t5.N1;
+      for (let i = 0; i < N1; i++) {
+        sim.t5.c1[i] = Math.max(0.005, Math.min(0.995, sim.t5.c1[i] + diff));
+      }
+      const N2 = sim.t5.N2;
+      for (let i = 0; i < N2 * N2; i++) {
+        sim.t5.c2[i] = Math.max(0.005, Math.min(0.995, sim.t5.c2[i] + diff));
+      }
+    }
+
+    function updateT5Speed(val) {
+      const speed = Math.max(1, Math.min(25, parseInt(val) || 1));
+      sim.t5.speed = speed;
+      const sld = document.getElementById('t5SpeedSlider');
+      if (sld) sld.value = speed;
+      const lbl = document.getElementById('t5SpeedVal');
+      if (lbl) {
+        lbl.textContent = `${speed}× ${speed >= 20 ? '(Fast-Forward End-State)' : (speed > 1 ? '(Accelerated)' : '(Real-time)')}`;
+      }
+    }
+
+    function setT5Speed(val) {
+      updateT5Speed(val);
+    }
+
+    function stepCahnHilliard1D() {
+      const N = sim.t5.N1;
+      const c = sim.t5.c1;
+      const mu = sim.t5.mu1;
+      const theta = sim.t5.theta;
+      const kappa = sim.t5.kappa;
+      const dt = 0.035;
+      const M = 1.0;
+
+      for (let i = 0; i < N; i++) {
+        const im1 = (i - 1 + N) % N;
+        const ip1 = (i + 1) % N;
+        const val = Math.max(0.015, Math.min(0.985, c[i]));
+        const dG = 2 * (1 - 2 * val) + theta * Math.log(val / (1 - val));
+        const lapC = c[ip1] - 2 * c[i] + c[im1];
+        mu[i] = dG - kappa * lapC;
+      }
+      for (let i = 0; i < N; i++) {
+        const im1 = (i - 1 + N) % N;
+        const ip1 = (i + 1) % N;
+        const lapMu = mu[ip1] - 2 * mu[i] + mu[im1];
+        c[i] = Math.max(0.001, Math.min(0.999, c[i] + dt * M * lapMu));
+      }
+    }
+
+    function stepCahnHilliard2D() {
+      const N = sim.t5.N2;
+      const c = sim.t5.c2;
+      const mu = sim.t5.mu2;
+      const theta = sim.t5.theta;
+      const kappa = sim.t5.kappa;
+      const dt = 0.012;
+      const M = 1.0;
+
+      // 1. Chemical potential with 9-point isotropic Laplacian (eliminates checkerboard modes)
+      for (let y = 0; y < N; y++) {
+        const ym1 = (y - 1 + N) % N;
+        const yp1 = (y + 1) % N;
+        for (let x = 0; x < N; x++) {
+          const xm1 = (x - 1 + N) % N;
+          const xp1 = (x + 1) % N;
+          const idx = y * N + x;
+          const val = Math.max(0.015, Math.min(0.985, c[idx]));
+          const dG = 2 * (1 - 2 * val) + theta * Math.log(val / (1 - val));
+          const ortho = c[y * N + xp1] + c[y * N + xm1] + c[yp1 * N + x] + c[ym1 * N + x];
+          const diag = c[yp1 * N + xp1] + c[yp1 * N + xm1] + c[ym1 * N + xp1] + c[ym1 * N + xm1];
+          const lapC = (4 * ortho + diag - 20 * c[idx]) / 6;
+          mu[idx] = dG - kappa * lapC;
+        }
+      }
+
+      // 2. Flux divergence with 9-point isotropic Laplacian
+      for (let y = 0; y < N; y++) {
+        const ym1 = (y - 1 + N) % N;
+        const yp1 = (y + 1) % N;
+        for (let x = 0; x < N; x++) {
+          const xm1 = (x - 1 + N) % N;
+          const xp1 = (x + 1) % N;
+          const idx = y * N + x;
+          const ortho = mu[y * N + xp1] + mu[y * N + xm1] + mu[yp1 * N + x] + mu[ym1 * N + x];
+          const diag = mu[yp1 * N + xp1] + mu[yp1 * N + xm1] + mu[ym1 * N + xp1] + mu[ym1 * N + xm1];
+          const lapMu = (4 * ortho + diag - 20 * mu[idx]) / 6;
+          c[idx] = Math.max(0.001, Math.min(0.999, c[idx] + dt * M * lapMu));
+        }
+      }
     }
 
 
@@ -2140,6 +2534,493 @@
       ctx2.textAlign = "left";
     }
 
+
+    // =========================================================================
+    // RENDER TAB 5: SPINODAL DECOMPOSITION & UPHILL DIFFUSION
+    // =========================================================================
+    function renderTab5() {
+      const cFree = document.getElementById('t5CanvasG');
+      const cPhase = document.getElementById('t5CanvasPhase');
+      const c1D = document.getElementById('t5Canvas1D');
+      const c2D = document.getElementById('t5Canvas2D');
+      if (!cFree || !cPhase || !c1D || !c2D) return;
+
+      const { ctx: ctxG, width: wG, height: hG } = setupCanvas(cFree);
+      const { ctx: ctxP, width: wP, height: hP } = setupCanvas(cPhase);
+      const { ctx: ctx1, width: w1, height: h1 } = setupCanvas(c1D);
+      const { ctx: ctx2, width: w2, height: h2 } = setupCanvas(c2D);
+
+      if (sim.t5.playing) {
+        const substeps = sim.t5.speed || 1;
+        for (let s = 0; s < substeps; s++) {
+          stepCahnHilliard1D();
+          stepCahnHilliard2D();
+          stepCahnHilliard2D();
+        }
+        sim.t5.time += 0.05 * substeps;
+      }
+
+      const theta = sim.t5.theta;
+      const x0 = sim.t5.x0;
+      const kappa = sim.t5.kappa;
+
+      // Spinodal & Binodal limits
+      const inSpinodal = theta < 1.0;
+      const xs1 = inSpinodal ? 0.5 * (1 - Math.sqrt(1 - theta)) : 0.5;
+      const xs2 = inSpinodal ? 0.5 * (1 + Math.sqrt(1 - theta)) : 0.5;
+      const [xb1, xb2] = getBinodal(theta);
+
+      // Curvature at x0
+      const d2g = d2Gdx2(x0, theta);
+
+      // Update dynamic threshold banner & sidebar readouts
+      const modeEl = document.getElementById('t5DiffMode');
+      const regEl = document.getElementById('t5RegimeReadout');
+      const d2gEl = document.getElementById('t5D2GReadout');
+      const diffEl = document.getElementById('t5DiffReadout');
+      const spinEl = document.getElementById('t5SpinodalReadout');
+      const binEl = document.getElementById('t5BinodalReadout');
+
+      const isUnstable = inSpinodal && x0 >= xs1 && x0 <= xs2;
+      const isMetastable = inSpinodal && !isUnstable && x0 >= xb1 && x0 <= xb2;
+
+      if (modeEl) {
+        if (isUnstable) {
+          modeEl.innerHTML = "⚡ Uphill Diffusion: Spinodal Instability (D̃ &lt; 0)";
+          modeEl.className = "text-[11px] font-semibold text-[#dc2626] transition-colors pt-0.5";
+        } else if (isMetastable) {
+          modeEl.innerHTML = "⚠️ Metastable: Downhill Smoothing (D̃ &gt; 0, Barrier Needed)";
+          modeEl.className = "text-[11px] font-semibold text-[#d97706] transition-colors pt-0.5";
+        } else {
+          modeEl.innerHTML = "❄️ Regular Diffusion: Downhill Smoothing (D̃ &gt; 0)";
+          modeEl.className = "text-[11px] font-semibold text-[#15803d] transition-colors pt-0.5";
+        }
+      }
+
+      if (d2gEl) {
+        d2gEl.textContent = `${d2g >= 0 ? "+" : ""}${d2g.toFixed(2)} RT_c`;
+        d2gEl.className = d2g < 0 ? "font-mono font-bold text-[#DC2626]" : "font-mono font-bold text-[#15803D]";
+      }
+      if (spinEl) {
+        spinEl.textContent = inSpinodal ? `[${xs1.toFixed(2)}, ${xs2.toFixed(2)}]` : "None (T ≥ Tc)";
+      }
+      if (binEl) {
+        binEl.textContent = inSpinodal ? `[${xb1.toFixed(2)}, ${xb2.toFixed(2)}]` : "None (T ≥ Tc)";
+      }
+
+      if (regEl) {
+        if (isUnstable) {
+          regEl.textContent = "Unstable (Spinodal)";
+          regEl.className = "font-mono font-bold text-[#DC2626]";
+        } else if (isMetastable) {
+          regEl.textContent = "Metastable (Nucleation)";
+          regEl.className = "font-mono font-bold text-[#D97706]";
+        } else {
+          regEl.textContent = "Stable (Homogeneous)";
+          regEl.className = "font-mono font-bold text-[#15803D]";
+        }
+      }
+      if (diffEl) {
+        if (isUnstable) {
+          diffEl.textContent = "Negative (< 0, Uphill)";
+          diffEl.className = "font-mono font-bold text-[#DC2626]";
+        } else if (isMetastable) {
+          diffEl.textContent = "Positive (> 0, Regular Downhill)";
+          diffEl.className = "font-mono font-bold text-[#D97706]";
+        } else {
+          diffEl.textContent = "Positive (> 0, Regular Downhill)";
+          diffEl.className = "font-mono font-bold text-[#15803D]";
+        }
+      }
+
+      // =======================================================================
+      // 1. TOP-LEFT CANVAS: FREE ENERGY CURVE g(x)
+      // =======================================================================
+      const padGL = 48, padGR = 16, padGT = 24, padGB = 24;
+      const gMin = -0.38, gMax = 0.28;
+      const toGX = (x) => padGL + x * (wG - padGL - padGR);
+      const toGY = (g) => padGT + ((gMax - g) / (gMax - gMin)) * (hG - padGT - padGB);
+
+      ctxG.fillStyle = "#ffffff";
+      ctxG.fillRect(0, 0, wG, hG);
+
+      // Grid
+      ctxG.strokeStyle = "#f1f5f9";
+      ctxG.lineWidth = 1;
+      for (let g = -0.3; g <= 0.2; g += 0.1) {
+        const py = toGY(g);
+        ctxG.beginPath(); ctxG.moveTo(padGL, py); ctxG.lineTo(wG - padGR, py); ctxG.stroke();
+        ctxG.fillStyle = "#94a3b8"; ctxG.font = "8.5px sans-serif";
+        ctxG.fillText(g.toFixed(1), padGL - 24, py + 3);
+      }
+      for (let x = 0.2; x <= 0.8; x += 0.2) {
+        const px = toGX(x);
+        ctxG.beginPath(); ctxG.moveTo(px, padGT); ctxG.lineTo(px, hG - padGB); ctxG.stroke();
+        ctxG.fillStyle = "#94a3b8"; ctxG.font = "8.5px sans-serif"; ctxG.textAlign = "center";
+        ctxG.fillText(x.toFixed(1), px, hG - padGB + 12);
+      }
+      ctxG.textAlign = "left";
+
+      // g = 0 reference line
+      ctxG.strokeStyle = "#cbd5e1";
+      ctxG.lineWidth = 1.2;
+      ctxG.setLineDash([3, 3]);
+      ctxG.beginPath(); ctxG.moveTo(padGL, toGY(0)); ctxG.lineTo(wG - padGR, toGY(0)); ctxG.stroke();
+      ctxG.setLineDash([]);
+
+      drawYAxisLabel(ctxG, "Free Energy g(x) / RTc", 16, hG / 2);
+      ctxG.fillStyle = "#64748b"; ctxG.font = "9px sans-serif"; ctxG.textAlign = "center";
+      ctxG.fillText("Composition xB", wG / 2, hG - 3); ctxG.textAlign = "left";
+
+      // Spinodal shaded region where d²g/dx² < 0
+      if (inSpinodal) {
+        ctxG.fillStyle = "rgba(239, 68, 68, 0.08)";
+        ctxG.fillRect(toGX(xs1), padGT, toGX(xs2) - toGX(xs1), hG - padGT - padGB);
+
+        // Common tangent chord
+        const gb = freeEnergy(xb1, theta);
+        ctxG.strokeStyle = "#64748b"; ctxG.lineWidth = 1.4; ctxG.setLineDash([3, 2]);
+        ctxG.beginPath(); ctxG.moveTo(toGX(xb1), toGY(gb)); ctxG.lineTo(toGX(xb2), toGY(gb)); ctxG.stroke();
+        ctxG.setLineDash([]);
+
+        // Binodal tangent points (green dots)
+        ctxG.fillStyle = "#16a34a";
+        ctxG.beginPath(); ctxG.arc(toGX(xb1), toGY(gb), 3.5, 0, 2*Math.PI); ctxG.fill();
+        ctxG.beginPath(); ctxG.arc(toGX(xb2), toGY(gb), 3.5, 0, 2*Math.PI); ctxG.fill();
+
+        // Inflection points (red dots)
+        const gs1 = freeEnergy(xs1, theta);
+        const gs2 = freeEnergy(xs2, theta);
+        ctxG.fillStyle = "#dc2626";
+        ctxG.beginPath(); ctxG.arc(toGX(xs1), toGY(gs1), 3.5, 0, 2*Math.PI); ctxG.fill();
+        ctxG.beginPath(); ctxG.arc(toGX(xs2), toGY(gs2), 3.5, 0, 2*Math.PI); ctxG.fill();
+      }
+
+      // Draw g(x) curve
+      ctxG.strokeStyle = "#4338ca";
+      ctxG.lineWidth = 2.4;
+      ctxG.beginPath();
+      const nPts = 100;
+      for (let i = 0; i <= nPts; i++) {
+        const x = 0.005 + (i / nPts) * 0.99;
+        const g = freeEnergy(x, theta);
+        const px = toGX(x);
+        const py = toGY(g);
+        if (i === 0) ctxG.moveTo(px, py); else ctxG.lineTo(px, py);
+      }
+      ctxG.stroke();
+
+      // Operating point marker at (x0, g(x0))
+      const g0 = freeEnergy(x0, theta);
+      const px0 = toGX(x0);
+      const py0 = toGY(g0);
+
+      // Tangent line showing chemical potential slope
+      const slope = dGdx(x0, theta);
+      const spanX = 0.12;
+      const xA = Math.max(0.01, x0 - spanX);
+      const xB = Math.min(0.99, x0 + spanX);
+      const gA = g0 - slope * (x0 - xA);
+      const gB = g0 + slope * (xB - x0);
+      ctxG.strokeStyle = "#d97706"; ctxG.lineWidth = 1.2; ctxG.setLineDash([2, 2]);
+      ctxG.beginPath(); ctxG.moveTo(toGX(xA), toGY(gA)); ctxG.lineTo(toGX(xB), toGY(gB)); ctxG.stroke();
+      ctxG.setLineDash([]);
+
+      // Gold Diamond at (x0, g0)
+      ctxG.fillStyle = "#d97706"; ctxG.strokeStyle = "#0f172a"; ctxG.lineWidth = 1;
+      ctxG.beginPath();
+      ctxG.moveTo(px0, py0 - 4.5); ctxG.lineTo(px0 + 4.5, py0);
+      ctxG.lineTo(px0, py0 + 4.5); ctxG.lineTo(px0 - 4.5, py0);
+      ctxG.closePath(); ctxG.fill(); ctxG.stroke();
+
+      // Header & Badge
+      ctxG.fillStyle = "#0f172a"; ctxG.font = "bold 10px sans-serif";
+      ctxG.fillText("Molar Free Energy g(x)", padGL, 14);
+
+      const d2gBadgeTxt = `∂²g/∂x² = ${d2g >= 0 ? "+" : ""}${d2g.toFixed(2)}`;
+      drawCanvasBadge(ctxG, d2gBadgeTxt, isUnstable ? "#dc2626" : (isMetastable ? "#d97706" : "#15803d"), isUnstable ? "rgba(254, 242, 242, 0.95)" : (isMetastable ? "rgba(255, 251, 235, 0.95)" : "rgba(240, 253, 244, 0.95)"), isUnstable ? "#fca5a5" : (isMetastable ? "#fcd34d" : "#86efac"), wG - padGR, 13);
+
+
+      // =======================================================================
+      // 2. TOP-RIGHT CANVAS: T–x PHASE DIAGRAM (MISCIBILITY GAP)
+      // =======================================================================
+      const padPL = 48, padPR = 16, padPT = 24, padPB = 24;
+      const thMin = 0.0, thMax = 1.30;
+      const toPX = (x) => padPL + x * (wP - padPL - padPR);
+      const toPY = (th) => padPT + ((thMax - th) / (thMax - thMin)) * (hP - padPT - padPB);
+
+      ctxP.fillStyle = "#ffffff";
+      ctxP.fillRect(0, 0, wP, hP);
+
+      // Grid
+      ctxP.strokeStyle = "#f1f5f9"; ctxP.lineWidth = 1;
+      for (let th = 0.2; th <= 1.2; th += 0.2) {
+        const py = toPY(th);
+        ctxP.beginPath(); ctxP.moveTo(padPL, py); ctxP.lineTo(wP - padPR, py); ctxP.stroke();
+        ctxP.fillStyle = "#94a3b8"; ctxP.font = "8.5px sans-serif";
+        ctxP.fillText(th.toFixed(1), padPL - 24, py + 3);
+      }
+      for (let x = 0.2; x <= 0.8; x += 0.2) {
+        const px = toPX(x);
+        ctxP.beginPath(); ctxP.moveTo(px, padPT); ctxP.lineTo(px, hP - padPB); ctxP.stroke();
+        ctxP.fillStyle = "#94a3b8"; ctxP.font = "8.5px sans-serif"; ctxP.textAlign = "center";
+        ctxP.fillText(x.toFixed(1), px, hP - padPB + 12);
+      }
+      ctxP.textAlign = "left";
+
+      drawYAxisLabel(ctxP, "Reduced Temp T / Tc", 16, hP / 2);
+      ctxP.fillStyle = "#64748b"; ctxP.font = "9px sans-serif"; ctxP.textAlign = "center";
+      ctxP.fillText("Composition xB", wP / 2, hP - 3); ctxP.textAlign = "left";
+
+      // Shaded phase regions
+      // Spinodal zone (red)
+      ctxP.fillStyle = "rgba(239, 68, 68, 0.08)";
+      ctxP.beginPath();
+      ctxP.moveTo(toPX(0), toPY(0));
+      for (let x = 0; x <= 1.0; x += 0.02) {
+        const thSp = 4 * x * (1 - x);
+        ctxP.lineTo(toPX(x), toPY(thSp));
+      }
+      ctxP.lineTo(toPX(1.0), toPY(0));
+      ctxP.closePath();
+      ctxP.fill();
+
+      // Metastable zone (amber)
+      ctxP.fillStyle = "rgba(245, 158, 11, 0.06)";
+      ctxP.beginPath();
+      ctxP.moveTo(toPX(0.005), toPY(0));
+      for (let x = 0.005; x <= 0.995; x += 0.01) {
+        const thBin = x === 0.5 ? 1.0 : (2 * (1 - 2 * x) / Math.log((1 - x) / x));
+        ctxP.lineTo(toPX(x), toPY(Math.min(1.0, thBin)));
+      }
+      for (let x = 1.0; x >= 0; x -= 0.02) {
+        const thSp = 4 * x * (1 - x);
+        ctxP.lineTo(toPX(x), toPY(thSp));
+      }
+      ctxP.closePath();
+      ctxP.fill();
+
+      // Draw Binodal curve (Green #16a34a)
+      ctxP.strokeStyle = "#16a34a"; ctxP.lineWidth = 2.4;
+      ctxP.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const x = 0.005 + (i / 100) * 0.99;
+        const thBin = x === 0.5 ? 1.0 : (2 * (1 - 2 * x) / Math.log((1 - x) / x));
+        const py = toPY(Math.min(1.0, thBin));
+        if (i === 0) ctxP.moveTo(toPX(x), py); else ctxP.lineTo(toPX(x), py);
+      }
+      ctxP.stroke();
+
+      // Draw Spinodal curve (Red #dc2626, dashed)
+      ctxP.strokeStyle = "#dc2626"; ctxP.lineWidth = 2.0; ctxP.setLineDash([3, 2]);
+      ctxP.beginPath();
+      for (let i = 0; i <= 100; i++) {
+        const x = (i / 100);
+        const thSp = 4 * x * (1 - x);
+        const py = toPY(thSp);
+        if (i === 0) ctxP.moveTo(toPX(x), py); else ctxP.lineTo(toPX(x), py);
+      }
+      ctxP.stroke();
+      ctxP.setLineDash([]);
+
+      // Critical Point marker at (0.5, 1.0)
+      ctxP.fillStyle = "#0f172a";
+      ctxP.beginPath(); ctxP.arc(toPX(0.5), toPY(1.0), 3.5, 0, 2*Math.PI); ctxP.fill();
+      ctxP.font = "bold 8.5px sans-serif";
+      ctxP.fillText("Tc", toPX(0.5) + 5, toPY(1.0) - 2);
+
+      // Active state tie-line at theta
+      if (inSpinodal) {
+        const yTie = toPY(theta);
+        ctxP.strokeStyle = "#0f172a"; ctxP.lineWidth = 1.4;
+        ctxP.beginPath(); ctxP.moveTo(toPX(xb1), yTie); ctxP.lineTo(toPX(xb2), yTie); ctxP.stroke();
+
+        // Binodal limits (green circles)
+        ctxP.fillStyle = "#16a34a";
+        ctxP.beginPath(); ctxP.arc(toPX(xb1), yTie, 3.5, 0, 2*Math.PI); ctxP.fill();
+        ctxP.beginPath(); ctxP.arc(toPX(xb2), yTie, 3.5, 0, 2*Math.PI); ctxP.fill();
+
+        // Spinodal limits (red dots)
+        ctxP.fillStyle = "#dc2626";
+        ctxP.beginPath(); ctxP.arc(toPX(xs1), yTie, 3, 0, 2*Math.PI); ctxP.fill();
+        ctxP.beginPath(); ctxP.arc(toPX(xs2), yTie, 3, 0, 2*Math.PI); ctxP.fill();
+      }
+
+      // Live operating point (x0, theta)
+      const pxOp = toPX(x0);
+      const pyOp = toPY(theta);
+
+      ctxP.strokeStyle = "#d97706"; ctxP.lineWidth = 1; ctxP.setLineDash([2, 2]);
+      ctxP.beginPath(); ctxP.moveTo(pxOp, padPT); ctxP.lineTo(pxOp, hP - padPB); ctxP.stroke();
+      ctxP.setLineDash([]);
+
+      ctxP.fillStyle = "#d97706"; ctxP.strokeStyle = "#0f172a"; ctxP.lineWidth = 1.2;
+      ctxP.beginPath();
+      ctxP.moveTo(pxOp, pyOp - 5); ctxP.lineTo(pxOp + 5, pyOp);
+      ctxP.lineTo(pxOp, pyOp + 5); ctxP.lineTo(pxOp - 5, pyOp);
+      ctxP.closePath(); ctxP.fill(); ctxP.stroke();
+
+      // Title & Labels
+      ctxP.fillStyle = "#0f172a"; ctxP.font = "bold 10px sans-serif";
+      ctxP.fillText("T–x Phase Diagram", padPL, 14);
+
+      drawCanvasBadge(ctxP, `(${x0.toFixed(2)}, ${theta.toFixed(2)} Tc)`, "#d97706", "rgba(255, 251, 235, 0.95)", "#fcd34d", wP - padPR, 13);
+
+
+      // =======================================================================
+      // 3. BOTTOM-LEFT CANVAS: 1D COMPOSITION PROFILE c(z, t)
+      // =======================================================================
+      const pad1L = 48, pad1R = 16, pad1T = 24, pad1B = 24;
+      const N1 = sim.t5.N1;
+      const c1 = sim.t5.c1;
+      const to1X = (i) => pad1L + (i / (N1 - 1)) * (w1 - pad1L - pad1R);
+      const to1Y = (c) => pad1T + ((1.0 - c) / 1.0) * (h1 - pad1T - pad1B);
+
+      ctx1.fillStyle = "#ffffff";
+      ctx1.fillRect(0, 0, w1, h1);
+
+      // Grid
+      ctx1.strokeStyle = "#f1f5f9"; ctx1.lineWidth = 1;
+      for (let c = 0.2; c <= 0.8; c += 0.2) {
+        const py = to1Y(c);
+        ctx1.beginPath(); ctx1.moveTo(pad1L, py); ctx1.lineTo(w1 - pad1R, py); ctx1.stroke();
+        ctx1.fillStyle = "#94a3b8"; ctx1.font = "8.5px sans-serif";
+        ctx1.fillText(c.toFixed(1), pad1L - 22, py + 3);
+      }
+      drawYAxisLabel(ctx1, "Composition c(z)", 16, h1 / 2);
+      ctx1.fillStyle = "#64748b"; ctx1.font = "9px sans-serif"; ctx1.textAlign = "center";
+      ctx1.fillText("Spatial Position z (1D Domain)", w1 / 2, h1 - 3); ctx1.textAlign = "left";
+
+      // Nominal x0 baseline
+      ctx1.strokeStyle = "#94a3b8"; ctx1.lineWidth = 1.2; ctx1.setLineDash([3, 3]);
+      ctx1.beginPath(); ctx1.moveTo(pad1L, to1Y(x0)); ctx1.lineTo(w1 - pad1R, to1Y(x0)); ctx1.stroke();
+      ctx1.setLineDash([]);
+      ctx1.fillStyle = "#64748b"; ctx1.font = "8px sans-serif";
+      ctx1.fillText(`x₀ = ${x0.toFixed(2)}`, w1 - pad1R - 45, to1Y(x0) - 3);
+
+      // Binodal reference levels (green dashed)
+      if (inSpinodal) {
+        ctx1.strokeStyle = "rgba(22, 163, 74, 0.4)"; ctx1.lineWidth = 1; ctx1.setLineDash([2, 3]);
+        ctx1.beginPath(); ctx1.moveTo(pad1L, to1Y(xb1)); ctx1.lineTo(w1 - pad1R, to1Y(xb1)); ctx1.stroke();
+        ctx1.beginPath(); ctx1.moveTo(pad1L, to1Y(xb2)); ctx1.lineTo(w1 - pad1R, to1Y(xb2)); ctx1.stroke();
+        ctx1.setLineDash([]);
+      }
+
+      // Shaded fill under curve
+      ctx1.fillStyle = "rgba(79, 70, 229, 0.08)";
+      ctx1.beginPath();
+      ctx1.moveTo(to1X(0), to1Y(0));
+      for (let i = 0; i < N1; i++) {
+        ctx1.lineTo(to1X(i), to1Y(c1[i]));
+      }
+      ctx1.lineTo(to1X(N1 - 1), to1Y(0));
+      ctx1.closePath();
+      ctx1.fill();
+
+      // Bold curve c(z)
+      ctx1.strokeStyle = "#4f46e5"; ctx1.lineWidth = 2.4;
+      ctx1.beginPath();
+      for (let i = 0; i < N1; i++) {
+        const px = to1X(i);
+        const py = to1Y(c1[i]);
+        if (i === 0) ctx1.moveTo(px, py); else ctx1.lineTo(px, py);
+      }
+      ctx1.stroke();
+
+      // Title & Dynamic Diffusion Badge (guaranteed zero header collision)
+      ctx1.fillStyle = "#0f172a"; ctx1.font = "bold 10px sans-serif";
+      ctx1.fillText("1D Profile c(z)", pad1L, 14);
+
+      if (isUnstable) {
+        drawCanvasBadge(ctx1, "⚡ Uphill (D̃ < 0)", "#dc2626", "rgba(254, 242, 242, 0.95)", "#fca5a5", w1 - pad1R, 13);
+      } else if (isMetastable) {
+        drawCanvasBadge(ctx1, "⚠️ Metastable", "#d97706", "rgba(255, 251, 235, 0.95)", "#fcd34d", w1 - pad1R, 13);
+      } else {
+        drawCanvasBadge(ctx1, "❄️ Downhill (D̃ > 0)", "#15803d", "rgba(240, 253, 244, 0.95)", "#86efac", w1 - pad1R, 13);
+      }
+
+
+      // =======================================================================
+      // 4. BOTTOM-RIGHT CANVAS: 2D MICROSTRUCTURE
+      // =======================================================================
+      const pad2L = 48, pad2R = 16, pad2T = 24, pad2B = 24;
+      const N2 = sim.t5.N2;
+      const c2 = sim.t5.c2;
+
+      ctx2.fillStyle = "#ffffff";
+      ctx2.fillRect(0, 0, w2, h2);
+
+      // Offscreen canvas creation
+      if (!sim.t5.offCanvas) {
+        sim.t5.offCanvas = document.createElement('canvas');
+        sim.t5.offCanvas.width = N2;
+        sim.t5.offCanvas.height = N2;
+        sim.t5.offCtx = sim.t5.offCanvas.getContext('2d');
+        sim.t5.imgData = sim.t5.offCtx.createImageData(N2, N2);
+      }
+
+      const imgData = sim.t5.imgData;
+      const data = imgData.data;
+
+      for (let i = 0; i < N2 * N2; i++) {
+        const val = Math.max(0, Math.min(1.0, c2[i]));
+        let r, g, b;
+        if (val < 0.5) {
+          // A-rich Green (22, 163, 74) to Neutral (226, 232, 240)
+          const f = val / 0.5;
+          r = Math.round(22 + f * (226 - 22));
+          g = Math.round(163 + f * (232 - 163));
+          b = Math.round(74 + f * (240 - 74));
+        } else {
+          // Neutral (226, 232, 240) to B-rich Blue (37, 99, 235)
+          const f = (val - 0.5) / 0.5;
+          r = Math.round(226 + f * (37 - 226));
+          g = Math.round(232 + f * (99 - 232));
+          b = Math.round(240 + f * (235 - 240));
+        }
+        const idx = i * 4;
+        data[idx] = r;
+        data[idx + 1] = g;
+        data[idx + 2] = b;
+        data[idx + 3] = 255;
+      }
+      sim.t5.offCtx.putImageData(imgData, 0, 0);
+
+      // Draw onto canvas scaled with border (square aspect ratio preserves isotropic geometry)
+      const availW = w2 - pad2L - pad2R;
+      const availH = h2 - pad2T - pad2B;
+      const boxSize = Math.min(availW, availH);
+      const boxX = Math.round(pad2L + (availW - boxSize) / 2);
+      const boxY = pad2T;
+
+      ctx2.save();
+      ctx2.imageSmoothingEnabled = true;
+      ctx2.drawImage(sim.t5.offCanvas, boxX, boxY, boxSize, boxSize);
+      ctx2.restore();
+
+      // Border around microstructure box
+      ctx2.strokeStyle = "#cbd5e1";
+      ctx2.lineWidth = 1.2;
+      ctx2.strokeRect(boxX, boxY, boxSize, boxSize);
+
+      // Title & Dynamic Badge (guaranteed zero header collision)
+      ctx2.fillStyle = "#0f172a"; ctx2.font = "bold 10px sans-serif";
+      ctx2.fillText("2D Microstructure", pad2L, 14);
+
+      if (isUnstable) {
+        const isDroplet = (x0 < 0.32 || x0 > 0.68);
+        drawCanvasBadge(ctx2, isDroplet ? "⚡ Droplets" : "⚡ Labyrinth", "#dc2626", "rgba(254, 242, 242, 0.95)", "#fca5a5", w2 - pad2R, 13);
+      } else {
+        drawCanvasBadge(ctx2, "❄️ Homogeneous", "#15803d", "rgba(240, 253, 244, 0.95)", "#86efac", w2 - pad2R, 13);
+      }
+
+      // Footer note
+      ctx2.font = "8.5px sans-serif"; ctx2.fillStyle = "#475569"; ctx2.textAlign = "center";
+      const footerMorph = isUnstable ? (x0 < 0.32 || x0 > 0.68 ? "Droplet Unmixing" : "Bicontinuous Labyrinth") : "Homogenizing / Single Phase";
+      ctx2.fillText(`Green: A-rich • Blue: B-rich • ${footerMorph}`, w2 / 2, h2 - 6);
+      ctx2.textAlign = "left";
+    }
+
     // Animation Loop
     function animate() {
       try {
@@ -2147,6 +3028,7 @@
         else if (currentTab === 2) renderTab2();
         else if (currentTab === 3) renderTab3();
         else if (currentTab === 4) renderTab4();
+        else if (currentTab === 5) renderTab5();
       } catch (err) {
         console.error("Simulation render error in tab", currentTab, err);
       }
@@ -2155,6 +3037,7 @@
     }
 
     // Launch
+    initSim5();
     requestAnimationFrame(animate);
   </script>
 </body>
