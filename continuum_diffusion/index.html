@@ -29,7 +29,7 @@
           Continuum Diffusion Interactive Workbench
         </h1>
         <p class="text-xs text-[var(--muted-foreground,#64748b)]">
-          Interactive physics models for Lecture 15: Laplacian curvature, Gaussian pulse, error function carburization, and Scheil coring.
+          Interactive physics models for Lecture 15: Laplacian curvature, Gaussian pulse, constant surface BC (erf &amp; carburization), Scheil coring, and spinodal decomposition.
         </p>
       </div>
 
@@ -42,7 +42,7 @@
           2. Gaussian Source
         </button>
         <button onclick="switchTab(3)" id="tabBtn3" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
-          3. Carburization (erf)
+          3. Constant Surface BC
         </button>
         <button onclick="switchTab(4)" id="tabBtn4" class="tab-btn px-2.5 py-1.5 text-xs font-semibold rounded-md transition-all text-[var(--muted-foreground,#64748b)] hover:text-[var(--foreground,#0f172a)]">
           4. Phase Diagram & Coring
@@ -263,7 +263,7 @@
 
 
     <!-- ========================================================================= -->
-    <!-- TAB 3: CARBURIZATION (CANONICAL CASE B) -->
+    <!-- TAB 3: CONSTANT SURFACE BC (CANONICAL CASE B) -->
     <!-- ========================================================================= -->
     <div id="tabContent3" class="tab-content hidden">
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-4">
@@ -272,7 +272,7 @@
         <div class="lg:col-span-1 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm space-y-3.5">
           <div>
             <h3 class="text-xs font-bold uppercase tracking-wider text-[#C41230]">Design 3 Controls</h3>
-            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Pinned Surface: Error Function & Part Carburization</p>
+            <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Constant Surface BC &amp; Error Function Solution</p>
           </div>
 
           <!-- Play / Reset -->
@@ -288,48 +288,58 @@
           <!-- Time Slider -->
           <div class="space-y-1">
             <div class="flex justify-between text-xs font-semibold">
-              <span>Furnace Time (t)</span>
+              <span>Diffusion Time (t)</span>
               <span id="t3TimeLabel" class="font-mono text-[#C41230]">0.25 hr</span>
             </div>
             <input type="range" id="t3TimeSlider" min="0.05" max="3.0" step="0.02" value="0.25" class="w-full cursor-pointer" oninput="onTimeInput(3, this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>0.05 hr (Early)</span>
+              <span>3.00 hr (Deep Case)</span>
+            </div>
           </div>
 
           <!-- Surface Cs -->
           <div class="space-y-1">
             <div class="flex justify-between text-xs font-semibold">
-              <span>Surface Gas Potential (Cs)</span>
+              <span>Surface Boundary (C<sub>s</sub>)</span>
               <span id="t3CsLabel" class="font-mono text-[#C41230]">1.00 wt% C</span>
             </div>
             <input type="range" id="t3CsSlider" min="0.7" max="1.4" step="0.05" value="1.0" class="w-full cursor-pointer" oninput="updateCs(this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>0.70 wt%</span>
+              <span>e.g. Furnace Atmosphere</span>
+              <span>1.40 wt%</span>
+            </div>
           </div>
 
           <!-- Core C0 -->
           <div class="space-y-1">
             <div class="flex justify-between text-xs font-semibold">
-              <span>Core Steel Carbon (C0)</span>
+              <span>Initial / Core Background (C₀)</span>
               <span id="t3C0Label" class="font-mono">0.20 wt% C</span>
             </div>
             <input type="range" id="t3C0Slider" min="0.05" max="0.4" step="0.05" value="0.2" class="w-full cursor-pointer" oninput="updateC0(this.value)">
+            <div class="flex justify-between text-[10px] text-[var(--muted-foreground,#64748b)]">
+              <span>0.05 wt%</span>
+              <span>e.g. Base Steel Core</span>
+              <span>0.40 wt%</span>
+            </div>
           </div>
 
-          <!-- Variable Definitions -->
+          <!-- Boundary Condition & Variable Definitions -->
           <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] space-y-1.5 text-xs text-[var(--muted-foreground,#475569)]">
-            <div class="font-bold text-[var(--foreground,#0f172a)] text-[11px] uppercase tracking-wider mb-1">Variable Definitions:</div>
+            <div class="font-bold text-[var(--foreground,#0f172a)] text-[11px] uppercase tracking-wider mb-1">Boundary Condition &amp; Variables:</div>
             <div class="flex items-baseline gap-1.5">
               <span class="font-mono font-bold text-[#C41230]">C<sub>s</sub>:</span>
-              <span class="text-[11px]">Surface carbon potential pinned by furnace gas</span>
+              <span class="text-[11px]">Constant surface boundary condition at x = 0 (Dirichlet BC)</span>
             </div>
             <div class="flex items-baseline gap-1.5">
               <span class="font-mono font-bold text-[#475569]">C₀:</span>
-              <span class="text-[11px]">Initial uniform steel core carbon content</span>
+              <span class="text-[11px]">Uniform initial composition throughout semi-infinite domain (x &gt; 0)</span>
             </div>
             <div class="flex items-baseline gap-1.5">
-              <span class="font-mono font-bold text-[#0f172a]">D:</span>
-              <span class="text-[11px]">Diffusivity of carbon in austenite (0.25 mm²/h)</span>
-            </div>
-            <div class="flex items-baseline gap-1.5">
-              <span class="font-mono font-bold text-[#0f172a]">t:</span>
-              <span class="text-[11px]">Furnace carburizing time (hours)</span>
+              <span class="font-mono font-bold text-[#0f172a]">D, t:</span>
+              <span class="text-[11px]">Diffusivity &amp; time (penetration scale: &radic;(Dt))</span>
             </div>
             <div class="flex items-baseline gap-1.5">
               <span class="font-mono font-bold text-[#2563EB]">x<sub>pen</sub>:</span>
@@ -342,11 +352,11 @@
         <div class="lg:col-span-3 bg-[var(--card,#ffffff)] border border-[var(--border,#e2e8f0)] rounded-xl p-4 shadow-sm flex flex-col justify-between">
           <div class="flex items-center justify-between pb-2 border-b border-[var(--border,#e2e8f0)]">
             <div>
-              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">Error Function Profile & Case Hardened Part Cross-Section</h2>
-              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Left: 1D Depth Profile • Right: Part Cross-Section with Case Depth x<sub>pen</sub></p>
+              <h2 class="text-sm font-bold text-[var(--foreground,#0f172a)]">Constant Surface Boundary Condition &amp; Error Function Solution</h2>
+              <p class="text-[11px] text-[var(--muted-foreground,#64748b)]">Left: 1D Depth Profile C(x,t) from erf • Right: Engineering Application Example (Gas Carburization)</p>
             </div>
             <span class="text-xs font-mono px-2 py-0.5 bg-[var(--muted,#f1f5f9)] rounded border border-[var(--border,#e2e8f0)]">
-              Case Depth x<sub>pen</sub>: <strong id="t3PenReadout" class="text-[#C41230]">0.50 mm</strong>
+              Penetration Depth x<sub>pen</sub>: <strong id="t3PenReadout" class="text-[#C41230]">0.50 mm</strong>
             </span>
           </div>
 
@@ -360,9 +370,16 @@
             </div>
           </div>
 
-          <div class="text-[11px] text-[var(--muted-foreground,#64748b)] flex justify-between items-center pt-2 border-t border-[var(--border,#e2e8f0)]">
-            <span>Dotted curves show historical profiles at t = 0.25 hr and t = 1.00 hr.</span>
-            <span class="font-semibold text-[var(--foreground,#0f172a)]">Gas Carburization (Semi-Infinite Domain)</span>
+          <!-- Explanatory note underneath the plots -->
+          <div class="pt-2 border-t border-[var(--border,#e2e8f0)] text-[11px] text-[var(--muted-foreground,#475569)] leading-relaxed">
+            <div class="p-2.5 bg-[var(--muted,#f8fafc)] rounded-lg border border-[var(--border,#e2e8f0)] flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+              <p class="leading-normal">
+                <strong class="text-[var(--foreground,#0f172a)]">The Error Function &amp; Gas Carburization:</strong> When a semi-infinite body with uniform initial concentration C₀ is held at a constant surface concentration C<sub>s</sub> at x = 0 (a Dirichlet boundary condition), the analytical solution to Fick's Second Law is the <strong>Gaussian Error Function</strong>: <code>(C(x,t) &minus; C<sub>s</sub>) / (C₀ &minus; C<sub>s</sub>) = erf(x / 2&radic;(Dt))</code>. A canonical metallurgical example is <strong>gas carburization</strong> of low-carbon steel (e.g., gears and bearings), where high-temperature furnace gases fix C<sub>s</sub> at the surface to diffuse carbon inwards, creating a hard, wear-resistant high-carbon "case" to depth x<sub>pen</sub> &approx; 2&radic;(Dt) while retaining a tough ductile core.
+              </p>
+              <span class="text-[10px] font-semibold text-[var(--foreground,#0f172a)] px-2.5 py-1 bg-white rounded border border-[var(--border,#cbd5e1)] whitespace-nowrap self-start md:self-center shadow-xs">
+                C(x,t) = C<sub>s</sub> &minus; (C<sub>s</sub> &minus; C₀) erf(x / 2&radic;(Dt))
+              </span>
+            </div>
           </div>
         </div>
 
@@ -1547,7 +1564,7 @@
         ctx1.fillText(y.toFixed(1), padL - 25, toScreenY(y) + 3);
       }
 
-      drawYAxisLabel(ctx1, "Carbon Conc C(x,t) [wt% C]", 18, h1 / 2);
+      drawYAxisLabel(ctx1, "Concentration C(x,t) [wt%]", 18, h1 / 2);
 
       // Hardness threshold line
       const cHard = 0.40;
@@ -1561,7 +1578,7 @@
       ctx1.fillStyle = "#D97706";
       ctx1.font = "9.5px sans-serif";
       ctx1.textAlign = "right";
-      ctx1.fillText("Hardened Case Threshold (0.40 wt% C)", w1 - padR - 10, toScreenY(cHard) - 5);
+      ctx1.fillText("Hardened Case Threshold (e.g. 0.40 wt% C)", w1 - padR - 10, toScreenY(cHard) - 5);
       ctx1.textAlign = "left";
 
       // Ghost milestone curves (t = 0.25 hr and t = 1.00 hr)
@@ -1645,7 +1662,7 @@
       ctx1.fillStyle = "#C41230";
       ctx1.fillRect(toScreenX(0) - 4, toScreenY(Cs) - 4, 8, 8);
       const pinY = toScreenY(Cs) <= padT + 22 ? toScreenY(Cs) + 14 : toScreenY(Cs) - 7;
-      const pinTxt = "⚓ Pinned C(0,t) = Cs";
+      const pinTxt = "⚓ Fixed Surface C(0,t) = Cs";
       ctx1.font = "bold 10px sans-serif";
       const pinW = ctx1.measureText(pinTxt).width;
       ctx1.fillStyle = "rgba(255, 255, 255, 0.90)";
@@ -1696,7 +1713,7 @@
       for (let x = 0.5; x <= 3.0; x += 0.5) {
         ctx1.fillText(x.toFixed(1), toScreenX(x), h1 - padB + 14);
       }
-      ctx1.fillText("Depth into Steel x [mm]", w1 / 2, h1 - 5);
+      ctx1.fillText("Depth from Surface x [mm] (e.g. Carburized Steel)", w1 / 2, h1 - 5);
       ctx1.textAlign = "left";
 
       // --- Right Panel: Part Cross-Section with UNIFORM NORMAL CASE DEPTH ---
@@ -1785,11 +1802,14 @@
       // Part Annotations
       ctx2.fillStyle = "#0f172a";
       ctx2.font = "bold 11px sans-serif";
-      ctx2.fillText("Part Cross-Section", 30, 20);
+      ctx2.fillText("Example: Steel Gear Carburization", 30, 20);
+      ctx2.font = "9px sans-serif";
+      ctx2.fillStyle = "#64748b";
+      ctx2.fillText("Gear tooth cross-section with hardened case", 30, 33);
 
       ctx2.fillStyle = "#D97706";
       ctx2.font = "bold 9.5px sans-serif";
-      ctx2.fillText(`Uniform Case Depth: ${xPen.toFixed(2)} mm`, 30, h2 - 14);
+      ctx2.fillText(`Hardened Case Depth: ${xPen.toFixed(2)} mm`, 30, h2 - 14);
 
       ctx2.textAlign = "right";
       ctx2.fillStyle = "#64748b";
